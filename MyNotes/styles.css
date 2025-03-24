@@ -1,0 +1,29 @@
+/* Sidebar (Navbar Vertical) */
+.sidebar {
+    width: 250px;
+    height: 100vh;
+    position: fixed;
+    left: 0;
+    top: 56px; /* Para não cobrir a navbar superior */
+    background-color: #f8f9fa;
+    padding-top: 20px;
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+.sidebar a {
+    display: block;
+    padding: 15px;
+    color: #333;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.sidebar a:hover {
+    background-color: #ddd;
+}
+
+/* Ajuste do conteúdo principal para não ficar atrás da sidebar */
+.content {
+    margin-left: 260px; /* Ajuste para não sobrepor a sidebar */
+    padding: 20px;
+}
