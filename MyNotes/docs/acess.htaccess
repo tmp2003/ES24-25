@@ -1,0 +1,6 @@
+Options +Indexes
+RewriteEngine On
+
+<FilesMatch "\.(pdf|docx|doc|xls|xlsx|png|jpg|jpeg|zip|rar|txt|mp4|mp3)$">
+    Require all granted
+</FilesMatch>

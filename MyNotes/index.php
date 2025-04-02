@@ -65,7 +65,7 @@ $escola = $_SESSION["escola"];
     <!-- Sidebar (Navbar Vertical) -->
     <div class="sidebar">
         <a href="#">Página Principal</a>
-        <a href="#">Meus Apontamentos</a>
+        <a href="apontamentos.php">Meus Apontamentos</a>
 
         <?php if ($isAdmin): ?>
         <a href="aprovar_contas.php" class="text-warning fw-bold">Aprovações</a>

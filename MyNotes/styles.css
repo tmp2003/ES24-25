@@ -1,11 +1,10 @@
 /* Sidebar (Navbar Vertical) */
-.sidebar {
+.sidebar{
     width: 250px;
     height: 100vh;
     position: fixed;
     left: 0;
     top: 56px; /* Para não cobrir a navbar superior */
-    background-color: #f8f9fa;
     padding-top: 20px;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
 }
@@ -22,8 +21,19 @@
     background-color: #ddd;
 }
 
-/* Ajuste do conteúdo principal para não ficar atrás da sidebar */
 .content {
-    margin-left: 260px; /* Ajuste para não sobrepor a sidebar */
+    margin-left: 260px; /* Mantém a sidebar visível */
     padding: 20px;
+    max-width: calc(100% - 260px); /* Garante que o conteúdo não ultrapasse */
 }
+
+.card {
+    max-width: 800px; /* Define um limite para o card */
+}
+
+.button-secondary {
+    position: absolute;
+    right: 10px; /* Ajuste conforme necessário */
+}
+
+
