@@ -8,8 +8,8 @@ if (!isset($_SESSION["user_id"])) {
     exit();
 }
 
-// Buscar utilizadores
-$sql = "SELECT id, username, email, aprovado FROM userdata";
+// Buscar utilizadores (inclui agora o campo admin)
+$sql = "SELECT id, username, email, aprovado, admin FROM userdata";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -73,7 +73,8 @@ $isAdmin = $_SESSION["is_admin"] ?? false;
             <th>Username</th>
             <th>Email</th>
             <th>Aprovado</th>
-            <th>Ações</th> <!-- A coluna de ações sempre aparece -->
+            <th>Admin</th>
+            <th>Ações</th>
         </tr>
     </thead>
     <tbody>
@@ -83,12 +84,18 @@ $isAdmin = $_SESSION["is_admin"] ?? false;
             <td><?= htmlspecialchars($user['username']) ?></td>
             <td><?= htmlspecialchars($user['email']) ?></td>
             <td><?= $user['aprovado'] ? "✔️ Aprovado" : "❌ Pendente" ?></td>
+            <td><?= $user['admin'] ? "✔️ Sim" : "❌ Não" ?></td>
             <td>
                 <div class="dropdown">
                     <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">Ações</button>
                     <ul class="dropdown-menu">
                         <?php if ($user['aprovado'] == 0): ?>
                             <li><a class="dropdown-item text-success" href="process.php?action=approve&id=<?= $user['id'] ?>">✅ Aprovar</a></li>
+                        <?php endif; ?>
+                        <?php if ($user['admin'] == 0): ?>
+                            <li><a class="dropdown-item text-warning" href="process.php?action=promote&id=<?= $user['id'] ?>">⬆️ Promover a Admin</a></li>
+                        <?php else: ?>
+                            <li><a class="dropdown-item text-secondary" href="process.php?action=demote&id=<?= $user['id'] ?>">⬇️ Despromover</a></li>
                         <?php endif; ?>
                         <li><a class="dropdown-item text-danger" href="#" onclick="confirmarExclusao(<?= $user['id'] ?>)">🗑️ Apagar</a></li>
                     </ul>
