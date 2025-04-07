@@ -9,7 +9,7 @@ if (!isset($_SESSION["user_id"])) {
 
 $userId = $_SESSION["user_id"];
 $username = $_SESSION["username"];
-$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 1;
+$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
 $escola = $_SESSION["escola"];
 
 // Buscar dados do utilizador

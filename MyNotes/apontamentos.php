@@ -11,7 +11,7 @@ if (!isset($_SESSION["user_id"])) {
 // Dados do utilizador
 $user_id = $_SESSION["user_id"];
 $username = $_SESSION["username"];
-$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 1;
+$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
 
 // Buscar todas as notas do utilizador ordenadas por data
 $stmt = $conn->prepare("SELECT id, title, content, created_at FROM notes WHERE user_id = ? ORDER BY created_at DESC");

@@ -11,7 +11,7 @@ if (!isset($_SESSION["user_id"])) {
 // Dados do utilizador logado
 $id = $_SESSION["user_id"];
 $username = $_SESSION["username"];
-$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 1; // Verifica se é admin
+$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2; // Verifica se é admin
 $escola = $_SESSION["escola"];
 
 $error = ""; // Inicializa a variável de erro
