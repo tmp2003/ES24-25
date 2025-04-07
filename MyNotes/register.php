@@ -38,6 +38,7 @@ if (empty($username) || empty($email) || empty($password) || empty($confirm_pass
         $stmt->bindParam(":escola", $escola, PDO::PARAM_STR);
         
         if ($stmt->execute()) {
+            
             header("Location: login.php"); // Redirecionar após registo bem-sucedido
             exit();
         } else {

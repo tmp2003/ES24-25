@@ -103,38 +103,48 @@ $isAdmin = $_SESSION["is_admin"] ?? false;
                                 <button class="btn btn-primary dropdown-toggle" type="button"
                                     data-bs-toggle="dropdown">Ações</button>
                                 <ul class="dropdown-menu">
+                                    <?php
+                                    $emailIpcb = str_ends_with($user['email'], '@ipcb.pt');
+                                    $adminLevel = $_SESSION['admin'] ?? 0;
+                                    ?>
+
                                     <?php if ($user['aprovado'] == 0): ?>
                                         <li><a class="dropdown-item text-success"
                                                 href="process.php?action=approve&id=<?= $user['id'] ?>">✅ Aprovar</a></li>
                                     <?php endif; ?>
 
-                                    <?php if ($user['admin'] == 0): ?>
-                                        <li><a class="dropdown-item text-success"
-                                                href="process.php?action=promote&id=<?= $user['id'] ?>">⬆️ Promover a
-                                                Moderador</a></li>
-                                        <li><a class="dropdown-item text-warning"
-                                                href="process.php?action=promot2&id=<?= $user['id'] ?>">⬆️ Promover a Admin</a>
-                                        </li>
-                                    <?php elseif ($user['admin'] == 1): ?>
-                                        <li><a class="dropdown-item text-warning"
-                                                href="process.php?action=promot2&id=<?= $user['id'] ?>">⬆️ Promover a Admin</a>
-                                        </li>
-                                        <li><a class="dropdown-item text-secondary"
-                                                href="process.php?action=demote&id=<?= $user['id'] ?>&to=0">⬇️ Despromover para
-                                                Utilizador</a></li>
-                                    <?php elseif ($user['admin'] == 2): ?>
-                                        <li><a class="dropdown-item text-secondary"
-                                                href="process.php?action=demote&id=<?= $user['id'] ?>&to=1">⬇️ Despromover para
-                                                Moderador</a></li>
-                                        <li><a class="dropdown-item text-secondary"
-                                                href="process.php?action=demote&id=<?= $user['id'] ?>&to=0">⬇️ Despromover para
-                                                Utilizador</a></li>
+                                    <?php if ($adminLevel == 2 && $emailIpcb): ?>
+                                        <?php if ($user['admin'] == 0): ?>
+                                            <li><a class="dropdown-item text-success"
+                                                    href="process.php?action=promote&id=<?= $user['id'] ?>">⬆️ Promover a
+                                                    Moderador</a></li>
+                                            <li><a class="dropdown-item text-warning"
+                                                    href="process.php?action=promote2&id=<?= $user['id'] ?>">⬆️ Promover a Admin</a>
+                                            </li>
+                                        <?php elseif ($user['admin'] == 1): ?>
+                                            <li><a class="dropdown-item text-warning"
+                                                    href="process.php?action=promote2&id=<?= $user['id'] ?>">⬆️ Promover a Admin</a>
+                                            </li>
+                                            <li><a class="dropdown-item text-secondary"
+                                                    href="process.php?action=demote&id=<?= $user['id'] ?>&to=0">⬇️ Despromover para
+                                                    Utilizador</a></li>
+                                        <?php elseif ($user['admin'] == 2): ?>
+                                            <li><a class="dropdown-item text-secondary"
+                                                    href="process.php?action=demote&id=<?= $user['id'] ?>&to=1">⬇️ Despromover para
+                                                    Moderador</a></li>
+                                            <li><a class="dropdown-item text-secondary"
+                                                    href="process.php?action=demote&id=<?= $user['id'] ?>&to=0">⬇️ Despromover para
+                                                    Utilizador</a></li>
+                                        <?php endif; ?>
                                     <?php endif; ?>
 
-                                    <li><a class="dropdown-item text-danger" href="#"
-                                            onclick="confirmarExclusao(<?= $user['id'] ?>)">🗑️ Apagar</a></li>
+                                    <?php if ($adminLevel == 2 && $_SESSION['user_id'] != $user['id']): ?>
+                                        <li><a class="dropdown-item text-danger" href="#"
+                                                onclick="confirmarExclusao(<?= $user['id'] ?>)">🗑️ Apagar</a></li>
+                                    <?php endif; ?>
                                 </ul>
                             </div>
+
 
                         </td>
                     </tr>
