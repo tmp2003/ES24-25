@@ -79,6 +79,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <!DOCTYPE html>
 <html lang="pt">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -86,6 +87,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
@@ -97,7 +99,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <ul class="navbar-nav w-100 align-items-center">
                     <li class="nav-item mx-auto search-form">
                         <form class="d-flex">
-                            <input class="form-control me-2" type="search" placeholder="Procurar Notas" aria-label="Search">
+                            <input class="form-control me-2" type="search" placeholder="Procurar Notas"
+                                aria-label="Search">
                             <button class="btn btn-outline-success" type="submit">Procurar</button>
                         </form>
                     </li>
@@ -109,7 +112,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     </nav>
 
-    <div class="sidebar">
+    <div class="sidebar" style="text-align: center;">
+        <a href="perfil.php" style="border: none; background: none; padding: 0;">
+            <img src="./img/avatar.png" class="rounded-circle" style="width: 80px; border: none;" alt="Avatar" />
+        </a>
+        <p></p>
         <a href="index.php">Página Principal</a>
         <a href="apontamentos.php">Meus Apontamentos</a>
         <?php if ($isAdmin): ?>
@@ -140,4 +147,5 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

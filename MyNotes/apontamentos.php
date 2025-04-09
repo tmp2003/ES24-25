@@ -58,7 +58,11 @@ $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </nav>
 
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" style="text-align: center;">
+        <a href="perfil.php" style="border: none; background: none; padding: 0;">
+            <img src="./img/avatar.png" class="rounded-circle" style="width: 80px; border: none;" alt="Avatar" />
+        </a>
+        <p></p>
         <a href="index.php">Página Principal</a>
         <a href="apontamentos.php">Meus Apontamentos</a>
         <?php if ($isAdmin): ?>

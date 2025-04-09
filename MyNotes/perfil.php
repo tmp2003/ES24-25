@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once "config.php"; // conexão à base de dados
+require_once "config.php";
 
 if (!isset($_SESSION["user_id"])) {
     header("Location: login.php");
@@ -12,15 +12,75 @@ $username = $_SESSION["username"];
 $isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
 $escola = $_SESSION["escola"];
 
+$erro = "";
+$success = "";
+
 // Buscar dados do utilizador
 $stmt = $conn->prepare("SELECT username, email, escola FROM userdata WHERE id = :id");
 $stmt->bindParam(":id", $userId, PDO::PARAM_INT);
 $stmt->execute();
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Determinar o tipo de utilizador
-$email = $user["email"];
-$tipoUtilizador = (str_ends_with($email, "@ipcb.pt")) ? "Docente" : "Aluno";
+$currentEmail = $user["email"];
+$tipoUtilizador = (str_ends_with($currentEmail, "@ipcb.pt")) ? "Docente" : "Aluno";
+
+// Submissão do formulário
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $novoUsername = trim($_POST["username"]);
+    $novoEmail = trim($_POST["email"]);
+    $novaPassword = $_POST["password"];
+    $confirmPassword = $_POST["confirm_password"];
+
+    $alterarEmail = $novoEmail !== $currentEmail;
+    $alterarPassword = !empty($novaPassword);
+
+    try {
+        if (empty($novoUsername) || empty($novoEmail)) {
+            throw new Exception("Nome e Email são obrigatórios.");
+        }
+
+        if ($alterarPassword && $novaPassword !== $confirmPassword) {
+            throw new Exception("As passwords não coincidem.");
+        }
+
+        $conn->beginTransaction();
+
+        $sql = "UPDATE userdata SET username = :username, email = :email";
+        $params = [
+            ":username" => $novoUsername,
+            ":email" => $novoEmail,
+            ":id" => $userId
+        ];
+
+        if ($alterarPassword) {
+            $sql .= ", password = :password";
+            $params[":password"] = password_hash($novaPassword, PASSWORD_DEFAULT);
+        }
+
+        if ($alterarEmail) {
+            $sql .= ", aprovado = 0";
+        }
+
+        $sql .= " WHERE id = :id";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($params);
+
+        $conn->commit();
+
+        if ($alterarEmail) {
+            session_destroy();
+            header("Location: login.php");
+            exit();
+        } else {
+            $_SESSION["username"] = $novoUsername;
+            $success = "Perfil atualizado com sucesso!";
+        }
+    } catch (Exception $e) {
+        $conn->rollBack();
+        $erro = $e->getMessage();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -52,7 +112,6 @@ $tipoUtilizador = (str_ends_with($email, "@ipcb.pt")) ? "Docente" : "Aluno";
                             <button class="btn btn-outline-success" type="submit">Procurar</button>
                         </form>
                     </li>
-
                     <?php if (isset($_SESSION["user_id"])): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="logout.php">Sair</a>
@@ -70,7 +129,7 @@ $tipoUtilizador = (str_ends_with($email, "@ipcb.pt")) ? "Docente" : "Aluno";
     <!-- Sidebar -->
     <div class="sidebar" style="text-align: center;">
         <a href="perfil.php" style="border: none; background: none; padding: 0;">
-            <img src="./img/avatar.png" class="rounded-circle" style="width: 80px; border: none;" alt="Avatar" />
+            <img src="./img/avatar.png" class="rounded-circle" style="width: 80px;" alt="Avatar" />
         </a>
         <p></p>
         <a href="index.php">Página Principal</a>
@@ -82,15 +141,30 @@ $tipoUtilizador = (str_ends_with($email, "@ipcb.pt")) ? "Docente" : "Aluno";
 
     <!-- Conteúdo Perfil -->
     <div class="content container mt-5">
-        <h2 class="mb-4">Perfil do Utilizador</h2>
-        <form>
+        <h2 class="mb-4">Editar Perfil</h2>
+
+        <?php if ($erro): ?>
+            <div class="alert alert-danger"><?= htmlspecialchars($erro) ?></div>
+        <?php elseif ($success): ?>
+            <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+        <?php endif; ?>
+
+        <form method="post">
             <div class="mb-3">
                 <label class="form-label">Nome de Utilizador</label>
-                <input type="text" class="form-control" value="<?= htmlspecialchars($user['username']) ?>" readonly>
+                <input type="text" name="username" class="form-control" value="<?= htmlspecialchars($user['username']) ?>" required>
             </div>
             <div class="mb-3">
                 <label class="form-label">Email</label>
-                <input type="email" class="form-control" value="<?= htmlspecialchars($user['email']) ?>" readonly>
+                <input type="email" name="email" class="form-control" value="<?= htmlspecialchars($user['email']) ?>" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Password</label>
+                <input type="password" name="password" class="form-control" id="password" placeholder="Deixa em branco para não alterar">
+            </div>
+            <div class="mb-3" id="confirm-password-group" style="display: none;">
+                <label class="form-label">Confirmar Password</label>
+                <input type="password" name="confirm_password" class="form-control" placeholder="Confirma a nova password">
             </div>
             <div class="mb-3">
                 <label class="form-label">Escola</label>
@@ -100,8 +174,22 @@ $tipoUtilizador = (str_ends_with($email, "@ipcb.pt")) ? "Docente" : "Aluno";
                 <label class="form-label">Tipo de Utilizador</label>
                 <input type="text" class="form-control" value="<?= $tipoUtilizador ?>" readonly>
             </div>
+            <button type="submit" class="btn btn-primary">Guardar Alterações</button>
         </form>
     </div>
+
+    <script>
+        const passwordField = document.getElementById('password');
+        const confirmGroup = document.getElementById('confirm-password-group');
+
+        passwordField.addEventListener('input', () => {
+            if (passwordField.value.trim() !== "") {
+                confirmGroup.style.display = "block";
+            } else {
+                confirmGroup.style.display = "none";
+            }
+        });
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
