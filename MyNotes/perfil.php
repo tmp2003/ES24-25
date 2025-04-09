@@ -73,6 +73,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             header("Location: login.php");
             exit();
         } else {
+            header("Location: index.php");
             $_SESSION["username"] = $novoUsername;
             $success = "Perfil atualizado com sucesso!";
         }
