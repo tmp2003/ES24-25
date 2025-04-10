@@ -1,20 +1,17 @@
 <?php
-session_start(); // Iniciar sessão
+session_start();
 require_once 'config.php';
 
-// Verificar se o utilizador está logado
 if (!isset($_SESSION["user_id"])) {
-    header("Location: login.php"); // Se não estiver logado, redirecionar para login
+    header("Location: login.php");
     exit();
 }
 
-// Dados do utilizador logado
 $id = $_SESSION["user_id"];
 $username = $_SESSION["username"];
-$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2; // Verifica se é admin
+$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
 $escola = $_SESSION["escola"];
-
-$error = ""; // Inicializa a variável de erro
+$error = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $title = trim($_POST["title"]);
@@ -23,53 +20,56 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (empty($title) || empty($text)) {
         $error = "Preencha todos os campos!";
     } else {
-        // Inserir a nota no banco de dados
         $sql = "INSERT INTO notes (user_id, title, content) VALUES (:user_id, :title, :content)";
-        $stmt = $conn->prepare($sql); // Prepare a declaração
+        $stmt = $conn->prepare($sql);
         $stmt->bindParam(":user_id", $id, PDO::PARAM_STR);
         $stmt->bindParam(":title", $title, PDO::PARAM_STR);
         $stmt->bindParam(":content", $text, PDO::PARAM_STR);
 
         if ($stmt->execute()) {
-            // Obter o ID da nota recém-inserida
             $noteId = $conn->lastInsertId();
 
-            // Processar o upload dos arquivos
             if (isset($_FILES['Files']) && is_array($_FILES['Files']['name'])) {
+                $extensoesPermitidas = ['jpg', 'jpeg', 'png', 'pdf', 'docx'];
+                $tiposMimePermitidos = [
+                    'image/jpeg', 'image/png', 'application/pdf',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                ];
+
                 for ($i = 0; $i < count($_FILES['Files']['name']); $i++) {
-                    if ($_FILES['Files']['error'][$i] == 0) {
-                        $nomeFicheiro = $_FILES['Files']['name'][$i]; // Nome original do arquivo
-                        $tmpFicheiro = $_FILES['Files']['tmp_name'][$i]; // Caminho temporário do arquivo
-                        $fileType = strtolower(pathinfo($nomeFicheiro, PATHINFO_EXTENSION)); // Obtém a extensão do arquivo
+                    $fileError = $_FILES['Files']['error'][$i];
+                    $fileName = $_FILES['Files']['name'][$i];
+                    $tmpName = $_FILES['Files']['tmp_name'][$i];
+                    $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                    $mimeType = mime_content_type($tmpName);
 
+                    if ($fileError === UPLOAD_ERR_OK) {
+                        if (in_array($fileExt, $extensoesPermitidas) && in_array($mimeType, $tiposMimePermitidos)) {
+                            $diretorioDestino = "./docs/$id/$noteId/";
+                            if (!is_dir($diretorioDestino)) {
+                                mkdir($diretorioDestino, 0777, true);
+                            }
 
-                        // Define o caminho de destino
-                        $diretorioDestino = "./docs/$id/$noteId/";
-
-                        // Verifica se o diretório existe, se não, cria
-                        if (!is_dir($diretorioDestino)) {
-                            mkdir($diretorioDestino, 0777, true); // Cria o diretório recursivamente
-                        }
-
-                        $filePath = $diretorioDestino . basename($nomeFicheiro);
-
-                        // Move o arquivo para o diretório desejado
-                        if (move_uploaded_file($tmpFicheiro, $filePath)) {
-                            // Inserir o arquivo na tabela note_files
-                            $sqlFile = "INSERT INTO note_files (note_id, file_path, file_type) VALUES (:note_id, :file_path, :file_type)";
-                            $stmtFile = $conn->prepare($sqlFile);
-                            $stmtFile->bindParam(":note_id", $noteId, PDO::PARAM_INT);
-                            $stmtFile->bindParam(":file_path", $filePath, PDO::PARAM_STR);
-                            $stmtFile->bindParam(":file_type", $fileType, PDO::PARAM_STR);
-                            $stmtFile->execute();
+                            $filePath = $diretorioDestino . basename($fileName);
+                            if (move_uploaded_file($tmpName, $filePath)) {
+                                $sqlFile = "INSERT INTO note_files (note_id, file_path, file_type) VALUES (:note_id, :file_path, :file_type)";
+                                $stmtFile = $conn->prepare($sqlFile);
+                                $stmtFile->bindParam(":note_id", $noteId, PDO::PARAM_INT);
+                                $stmtFile->bindParam(":file_path", $filePath, PDO::PARAM_STR);
+                                $stmtFile->bindParam(":file_type", $fileExt, PDO::PARAM_STR);
+                                $stmtFile->execute();
+                            }
+                        } else {
+                            $error .= "Ficheiro não permitido: $fileName<br>";
                         }
                     }
                 }
             }
 
-            // Redirecionar após registo bem-sucedido
-            header("Location: index.php");
-            exit();
+            if (empty($error)) {
+                header("Location: index.php");
+                exit();
+            }
         } else {
             $error = "Erro ao criar nota!";
         }
@@ -99,8 +99,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <ul class="navbar-nav w-100 align-items-center">
                     <li class="nav-item mx-auto search-form">
                         <form class="d-flex">
-                            <input class="form-control me-2" type="search" placeholder="Procurar Notas"
-                                aria-label="Search">
+                            <input class="form-control me-2" type="search" placeholder="Procurar Notas" aria-label="Search">
                             <button class="btn btn-outline-success" type="submit">Procurar</button>
                         </form>
                     </li>
@@ -126,6 +125,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <form method="POST" enctype="multipart/form-data">
         <div class="content">
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-danger"><?= $error ?></div>
+            <?php endif; ?>
+
             <div class="mb-3">
                 <label for="title" class="form-label">Titulo da Nota</label>
                 <input type="text" class="form-control" name="title" required>
@@ -136,7 +139,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
             <div class="mb-3">
                 <label for="formFileMultiple" class="form-label">Anexar ficheiros</label>
-                <input class="form-control" type="file" name="Files[]" multiple>
+                <input class="form-control" type="file" name="Files[]" multiple accept=".jpg,.jpeg,.png,.pdf,.docx">
             </div>
             <div class="mb-3">
                 <button class="btn btn-secondary btn-lg" type="submit">Guardar</button>
@@ -147,5 +150,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
 </html>
