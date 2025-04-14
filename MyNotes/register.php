@@ -1,6 +1,10 @@
 <?php
 session_start();
 require_once "config.php"; // Conexão com a base de dados
+require 'vendor/autoload.php'; // Carregar o PHPMailer
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = trim($_POST["username"]);
@@ -10,43 +14,70 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $escola = trim($_POST["escola"]);
 
     // Validação dos campos
-if (empty($username) || empty($email) || empty($password) || empty($confirm_password) || empty($escola)) {
-    $error = "Preencha todos os campos!";
-} elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    $error = "Formato de email inválido!";
-} elseif (!preg_match('/@ipcb\.pt$|@ipcbcampus\.pt$/', $email)) {
-    $error = "O email deve ser do domínio @ipcb.pt ou @ipcbcampus.pt!";
-} elseif ($password !== $confirm_password) {
-    $error = "As senhas não coincidem!";
-} else {
-    // Verificar se o email já existe
-    $sql = "SELECT id FROM userdata WHERE email = :email";
-    $stmt = $conn->prepare($sql);
-    $stmt->bindParam(":email", $email, PDO::PARAM_STR);
-    $stmt->execute();
-        
-    if ($stmt->fetch()) {
-        $error = "Este email já está registado!";
+    if (empty($username) || empty($email) || empty($password) || empty($confirm_password) || empty($escola)) {
+        $error = "Preencha todos os campos!";
+    } elseif ($escola === "Escola") { // Verificar se a escola foi selecionada
+        $error = "Por favor, selecione uma escola válida!";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Formato de email inválido!";
+    } elseif (!preg_match('/@ipcb\.pt$|@ipcbcampus\.pt$/', $email)) {
+        $error = "O email deve ser do domínio @ipcb.pt ou @ipcbcampus.pt!";
+    } elseif ($password !== $confirm_password) {
+        $error = "As senhas não coincidem!";
     } else {
-        // Inserir novo utilizador
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-        $sql = "INSERT INTO userdata (username, email, password,escola) VALUES (:username, :email, :password,:escola)";
+        // Verificar se o email já existe
+        $sql = "SELECT id FROM userdata WHERE email = :email";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":username", $username, PDO::PARAM_STR);
         $stmt->bindParam(":email", $email, PDO::PARAM_STR);
-        $stmt->bindParam(":password", $hashed_password, PDO::PARAM_STR);
-        $stmt->bindParam(":escola", $escola, PDO::PARAM_STR);
+        $stmt->execute();
         
-        if ($stmt->execute()) {
-            
-            header("Location: login.php"); // Redirecionar após registo bem-sucedido
-            exit();
+        if ($stmt->fetch()) {
+            $error = "Este email já está registado!";
         } else {
-            $error = "Erro ao registrar. Tente novamente!";
+            // Inserir novo utilizador
+            $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+            $sql = "INSERT INTO userdata (username, email, password, escola) VALUES (:username, :email, :password, :escola)";
+            $stmt = $conn->prepare($sql);
+            $stmt->bindParam(":username", $username, PDO::PARAM_STR);
+            $stmt->bindParam(":email", $email, PDO::PARAM_STR);
+            $stmt->bindParam(":password", $hashed_password, PDO::PARAM_STR);
+            $stmt->bindParam(":escola", $escola, PDO::PARAM_STR);
+            
+            if ($stmt->execute()) {
+                // Enviar email ao utilizador
+                $mail = new PHPMailer(true);
+                try {
+                    // Configurações do servidor SMTP
+                    $mail->isSMTP();
+                    $mail->Host = 'smtp.gmail.com'; // Servidor SMTP do Gmail
+                    $mail->SMTPAuth = true;
+                    $mail->Username = 'mynotesnoreply@gmail.com'; // Substitua pelo seu email do Gmail
+                    $mail->Password = 'lubr xyeb ewxx zena'; // Substitua pela senha de aplicativo gerada
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                    $mail->Port = 587;
+
+                    // Configurações do email
+                    $mail->CharSet = 'UTF-8';
+                    $mail->setFrom('seuemail@gmail.com', 'MyNotes'); // Substitua pelo seu email
+                    $mail->addAddress($email, $username);
+                    $mail->isHTML(true);
+                    $mail->Subject = 'Conta Criada - Aguardando Aprovação';
+                    $mail->Body = "<p>Bem vindo/a <b>$username</b>,</p>
+                                   <p>A sua conta foi criada com sucesso, por favor aguarde a aprovação de um administrador.</p>
+                                   <p>Obrigado por se registrar no MyNotes!</p>";
+
+                    $mail->send();
+                } catch (Exception $e) {
+                    $error = "O registo foi concluído, mas o email não pôde ser enviado. Erro: {$mail->ErrorInfo}";
+                }
+
+                header("Location: login.php"); // Redirecionar após registo bem-sucedido
+                exit();
+            } else {
+                $error = "Erro ao registrar. Tente novamente!";
+            }
         }
     }
-}
-
 }
 ?>
 
@@ -90,15 +121,15 @@ if (empty($username) || empty($email) || empty($password) || empty($confirm_pass
                                             <input type="password" name="confirm_password" class="form-control form-control-lg" placeholder="Confirme a Password" required />
                                         </div>
                                         <div class="form-outline mb-3">
-                                        <select class="form-select" aria-label="Default select example" name="escola">
-                                            <option selected>Escola</option>
-                                            <option value="ESART">ESART</option>
-                                            <option value="ESA">ESA</option>
-                                            <option value="ESE">ESE</option>
-                                            <option value="EST">EST</option>
-                                            <option value="ESGIN">ESGIN</option>
-                                            <option value="ESALD">ESALD</option>
-                                        </select>
+                                            <select class="form-select" aria-label="Default select example" name="escola" required>
+                                                <option value="Escola" selected>Escola</option>
+                                                <option value="ESART">ESART</option>
+                                                <option value="ESA">ESA</option>
+                                                <option value="ESE">ESE</option>
+                                                <option value="EST">EST</option>
+                                                <option value="ESGIN">ESGIN</option>
+                                                <option value="ESALD">ESALD</option>
+                                            </select>
                                         </div>
                                         <div class="pt-1 mb-3">
                                             <button class="btn btn-dark btn-lg btn-block" type="submit">Registrar</button>
