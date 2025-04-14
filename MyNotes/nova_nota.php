@@ -17,8 +17,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $title = trim($_POST["title"]);
     $text = trim($_POST["text"]);
 
-    if (empty($title) || empty($text)) {
-        $error = "Preencha todos os campos!";
+    if (empty($title)) {
+        $error = "O título é obrigatório!";
     } else {
         $sql = "INSERT INTO notes (user_id, title, content) VALUES (:user_id, :title, :content)";
         $stmt = $conn->prepare($sql);
@@ -40,10 +40,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $fileError = $_FILES['Files']['error'][$i];
                     $fileName = $_FILES['Files']['name'][$i];
                     $tmpName = $_FILES['Files']['tmp_name'][$i];
-                    $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
-                    $mimeType = mime_content_type($tmpName);
 
-                    if ($fileError === UPLOAD_ERR_OK) {
+                    // Verificar se o arquivo foi enviado
+                    if (!empty($tmpName) && $fileError === UPLOAD_ERR_OK) {
+                        $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                        $mimeType = mime_content_type($tmpName);
+
                         if (in_array($fileExt, $extensoesPermitidas) && in_array($mimeType, $tiposMimePermitidos)) {
                             $diretorioDestino = "./docs/$id/$noteId/";
                             if (!is_dir($diretorioDestino)) {
@@ -135,7 +137,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
             <div class="mb-3">
                 <label for="text" class="form-label">Conteúdo da Nota</label>
-                <textarea class="form-control" name="text" rows="10" required></textarea>
+                <textarea class="form-control" name="text" rows="10"></textarea>
             </div>
             <div class="mb-3">
                 <label for="formFileMultiple" class="form-label">Anexar ficheiros</label>
