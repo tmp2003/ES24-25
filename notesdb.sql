@@ -3,18 +3,14 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 07-Abr-2025 às 18:34
+-- Tempo de geração: 14-Abr-2025 às 17:57
 -- Versão do servidor: 10.4.28-MariaDB
 -- versão do PHP: 8.2.4
-
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
-
-CREATE DATABASE IF NOT EXISTS `notesdb`;
-USE `notesdb`;
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -24,6 +20,59 @@ USE `notesdb`;
 --
 -- Banco de dados: `notesdb`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura da tabela `cadeiras`
+--
+
+CREATE TABLE `cadeiras` (
+  `id` int(11) NOT NULL,
+  `nome` varchar(100) NOT NULL,
+  `escola_id` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Extraindo dados da tabela `cadeiras`
+--
+
+INSERT INTO `cadeiras` (`id`, `nome`, `escola_id`) VALUES
+(13, 'Agronomia Geral', 1),
+(14, 'Biotecnologia', 1),
+(15, 'Design Gráfico', 2),
+(16, 'Tecnologias Musicais', 2),
+(17, 'Didática da Matemática', 3),
+(18, 'Psicologia da Educação', 3),
+(19, 'Anatomia', 4),
+(20, 'Fisioterapia', 4),
+(21, 'Gestão de Empresas', 5),
+(22, 'Contabilidade', 5),
+(23, 'Programação Web', 6),
+(24, 'Redes de Computadores', 6);
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura da tabela `escolas`
+--
+
+CREATE TABLE `escolas` (
+  `id` int(11) NOT NULL,
+  `nome` varchar(100) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Extraindo dados da tabela `escolas`
+--
+
+INSERT INTO `escolas` (`id`, `nome`) VALUES
+(1, 'Escola Superior Agrária'),
+(2, 'Escola Superior de Artes Aplicadas'),
+(3, 'Escola Superior de Educação'),
+(4, 'Escola Superior de Saúde Dr. Lopes Dias'),
+(5, 'Escola Superior de Gestão'),
+(6, 'Escola Superior de Tecnologia');
 
 -- --------------------------------------------------------
 
@@ -83,14 +132,28 @@ CREATE TABLE `userdata` (
 --
 
 INSERT INTO `userdata` (`id`, `username`, `email`, `password`, `aprovado`, `admin`, `escola`) VALUES
-(5, 'PauloLage17', 'paulo.cardoso@ipcbcampus.pt', '$2y$10$hQ30GFw26QX0zx7JdPjKZOqYmExso9LpD1Ap/tc/TSFCflxk1HoM2', 1, 2, 'EST'),
-(6, 'Mariana5', 'bcoutinho@ipcbcampus.pt', '$2y$10$WineHAMoN.aYlwWF7lEh8uqYzLf8DnU2immvOambteqGnmT3eOdZS', 1, 1, 'Escola'),
-(7, 'Tiago123', 'tiago.pinheiro1@ipcbcampus.pt', '$2y$10$xz6nZiVFAwzhpz06bL5uUucTBqmOnVkuIfQvkrTVaNKOs5pbX05gC', 1, 1, 'EST'),
-(8, 'Martim3', 'martim.marques@ipcbcampus.pt', '$2y$10$XEhy9IyV9XtLgTNRBBtbqenXQ75mKHaGmaYuBlAevkosJNpBP1sOW', 1, 1, 'EST');
+(5, 'PauloLage17', 'paulo.cardoso@ipcb.pt', '$2y$10$hQ30GFw26QX0zx7JdPjKZOqYmExso9LpD1Ap/tc/TSFCflxk1HoM2', 1, 2, 'EST'),
+(6, 'Mariana5', 'bcoutinho@ipcb.pt', '$2y$10$WineHAMoN.aYlwWF7lEh8uqYzLf8DnU2immvOambteqGnmT3eOdZS', 1, 2, 'Escola'),
+(7, 'Tiago123', 'tiago.pinheiro1@ipcb.pt', '$2y$10$xz6nZiVFAwzhpz06bL5uUucTBqmOnVkuIfQvkrTVaNKOs5pbX05gC', 1, 1, 'EST'),
+(8, 'Martim3', 'martim.marques@ipcb.pt', '$2y$10$XEhy9IyV9XtLgTNRBBtbqenXQ75mKHaGmaYuBlAevkosJNpBP1sOW', 1, 1, 'EST'),
+(9, 'João Maria', 'JMaria@ipcbcampus.pt', '$2y$10$GaoMu/cVnKIGtMXI/jQ3Ve.fVB9nNQ3RlhKh8h5/5/yYR.jTrROi2', 1, 0, 'EST');
 
 --
 -- Índices para tabelas despejadas
 --
+
+--
+-- Índices para tabela `cadeiras`
+--
+ALTER TABLE `cadeiras`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `escola_id` (`escola_id`);
+
+--
+-- Índices para tabela `escolas`
+--
+ALTER TABLE `escolas`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Índices para tabela `notes`
@@ -119,6 +182,18 @@ ALTER TABLE `userdata`
 --
 
 --
+-- AUTO_INCREMENT de tabela `cadeiras`
+--
+ALTER TABLE `cadeiras`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=25;
+
+--
+-- AUTO_INCREMENT de tabela `escolas`
+--
+ALTER TABLE `escolas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
 -- AUTO_INCREMENT de tabela `notes`
 --
 ALTER TABLE `notes`
@@ -134,11 +209,17 @@ ALTER TABLE `note_files`
 -- AUTO_INCREMENT de tabela `userdata`
 --
 ALTER TABLE `userdata`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- Restrições para despejos de tabelas
 --
+
+--
+-- Limitadores para a tabela `cadeiras`
+--
+ALTER TABLE `cadeiras`
+  ADD CONSTRAINT `cadeiras_ibfk_1` FOREIGN KEY (`escola_id`) REFERENCES `escolas` (`id`) ON DELETE CASCADE;
 
 --
 -- Limitadores para a tabela `notes`
