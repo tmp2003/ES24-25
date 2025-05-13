@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 14-Abr-2025 às 17:57
+-- Tempo de geração: 13-Maio-2025 às 17:59
 -- Versão do servidor: 10.4.28-MariaDB
 -- versão do PHP: 8.2.4
 
@@ -95,7 +95,8 @@ CREATE TABLE `notes` (
 --
 
 INSERT INTO `notes` (`id`, `user_id`, `title`, `content`, `is_private`, `created_at`, `updated_at`) VALUES
-(2, 5, 'AA', 'FF', 1, '2025-04-01 16:36:36', '2025-04-01 16:36:36');
+(13, 10, 'Teste', 'Testeeeeeejibrigbwjibgbonaesf', 1, '2025-05-12 15:48:34', '2025-05-12 16:13:53'),
+(14, 10, 'ADA', 'FAF', 1, '2025-05-12 16:13:43', '2025-05-12 16:13:43');
 
 -- --------------------------------------------------------
 
@@ -132,11 +133,13 @@ CREATE TABLE `userdata` (
 --
 
 INSERT INTO `userdata` (`id`, `username`, `email`, `password`, `aprovado`, `admin`, `escola`) VALUES
-(5, 'PauloLage17', 'paulo.cardoso@ipcb.pt', '$2y$10$hQ30GFw26QX0zx7JdPjKZOqYmExso9LpD1Ap/tc/TSFCflxk1HoM2', 1, 2, 'EST'),
-(6, 'Mariana5', 'bcoutinho@ipcb.pt', '$2y$10$WineHAMoN.aYlwWF7lEh8uqYzLf8DnU2immvOambteqGnmT3eOdZS', 1, 2, 'Escola'),
+(6, 'Mariana5', 'bcoutinho@ipcb.pt', '$2y$10$WineHAMoN.aYlwWF7lEh8uqYzLf8DnU2immvOambteqGnmT3eOdZS', 1, 2, 'EST'),
 (7, 'Tiago123', 'tiago.pinheiro1@ipcb.pt', '$2y$10$xz6nZiVFAwzhpz06bL5uUucTBqmOnVkuIfQvkrTVaNKOs5pbX05gC', 1, 1, 'EST'),
 (8, 'Martim3', 'martim.marques@ipcb.pt', '$2y$10$XEhy9IyV9XtLgTNRBBtbqenXQ75mKHaGmaYuBlAevkosJNpBP1sOW', 1, 1, 'EST'),
-(9, 'João Maria', 'JMaria@ipcbcampus.pt', '$2y$10$GaoMu/cVnKIGtMXI/jQ3Ve.fVB9nNQ3RlhKh8h5/5/yYR.jTrROi2', 1, 0, 'EST');
+(9, 'João Maria', 'JMaria@ipcbcampus.pt', '$2y$10$GaoMu/cVnKIGtMXI/jQ3Ve.fVB9nNQ3RlhKh8h5/5/yYR.jTrROi2', 1, 0, 'EST'),
+(10, 'PauloLage17', 'paulo.cardoso@ipcb.pt', '$2y$10$V.H1sM5Rjs9RK1wUp8rDeu/QC7Y8rHvsOpgnaTtf9bNsLx.nXtNJC', 1, 2, 'EST'),
+(15, 'Jesus', 'tiago.pinheiro1@ipcbcampus.pt', '$2y$10$h5ZYbD5hip/ACHwLTCVV5u3.Uu7p/fLdmgtFhp/ZDqArRx2jin5IW', 0, 0, 'EST'),
+(17, 'PauloAluno', 'paulo.cardoso@ipcbcampus.pt', '$2y$10$jRWLlvcPOfTuLdZAWPobbeX0fLp8J3aAtEozRYqFjT9ZPm0jxNTGS', 1, 0, 'EST');
 
 --
 -- Índices para tabelas despejadas
@@ -197,19 +200,19 @@ ALTER TABLE `escolas`
 -- AUTO_INCREMENT de tabela `notes`
 --
 ALTER TABLE `notes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT de tabela `note_files`
 --
 ALTER TABLE `note_files`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
 -- AUTO_INCREMENT de tabela `userdata`
 --
 ALTER TABLE `userdata`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
 
 --
 -- Restrições para despejos de tabelas
