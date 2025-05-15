@@ -1,10 +1,6 @@
 <?php
 session_start();
 require_once "config.php";
-require 'vendor/autoload.php'; // Carregar o PHPMailer
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
 
 // Verifica se o utilizador está logado
 if (!isset($_SESSION["user_id"])) {
@@ -12,99 +8,46 @@ if (!isset($_SESSION["user_id"])) {
     exit();
 }
 
-// Buscar utilizadores (inclui agora o campo admin)
-$sql = "SELECT id, username, email, aprovado, admin FROM userdata";
+// Processar ações de aprovação/recusa
+if (isset($_GET['action'], $_GET['id'])) {
+    $notaId = intval($_GET['id']);
+    if ($_GET['action'] === 'aprovar') {
+        $stmt = $conn->prepare("UPDATE notes SET private_status = 0 WHERE id = ?");
+        $stmt->execute([$notaId]);
+        header("Location: aprovar_notas.php");
+        exit();
+    }
+    if ($_GET['action'] === 'recusar') {
+        $stmt = $conn->prepare("UPDATE notes SET private_status = 1 WHERE id = ?");
+        $stmt->execute([$notaId]);
+        header("Location: aprovar_notas.php");
+        exit();
+    }
+}
+
+// Buscar notas com private_status 0 (aprovado) ou 2 (a aguardar)
+$sql = "SELECT notes.id, notes.title, notes.content, notes.private_status, 
+               userdata.username, cadeiras.nome AS cadeira_nome
+        FROM notes
+        JOIN userdata ON notes.user_id = userdata.id
+        LEFT JOIN cadeiras ON notes.id_cadeira = cadeiras.id
+        WHERE notes.private_status IN (0,2)
+        ORDER BY notes.private_status DESC, notes.id DESC";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
-$users = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Dados do utilizador logado
-$username = $_SESSION["username"];
-$isAdmin = $_SESSION["is_admin"] ?? false;
-
-// Função para enviar email ao utilizador aprovado
-function enviarEmailAprovacao($email, $username)
-{
-    $mail = new PHPMailer(true);
-    try {
-        // Configurações do servidor SMTP
-        $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com'; // Servidor SMTP do Gmail
-        $mail->SMTPAuth = true;
-        $mail->Username = 'mynotesnoreply@gmail.com'; // Substitua pelo seu email do Gmail
-        $mail->Password = 'lubr xyeb ewxx zena'; // Substitua pela senha de aplicativo gerada
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
-
-        // Configurações do email
-        $mail->CharSet = 'UTF-8';
-        $mail->setFrom('mynotesnoreply@gmail.com', 'MyNotes'); // Substitua pelo seu email
-        $mail->addAddress($email, $username);
-        $mail->isHTML(true);
-        $mail->Subject = 'Conta Aprovada - MyNotes';
-        $mail->Body = "<p>Olá <b>$username</b>,</p>
-                       <p>A sua conta foi aprovada por um administrador. Já pode acessar o site e utilizar os nossos serviços.</p>
-                       <p>Obrigado por utilizar o MyNotes!</p>";
-
-        $mail->send();
-    } catch (Exception $e) {
-        // Log de erro (opcional)
-        error_log("Erro ao enviar email: {$mail->ErrorInfo}");
-    }
-}
-
-// Processar ações de aprovação
-if (isset($_GET['action']) && $_GET['action'] === 'approve' && isset($_GET['id'])) {
-    $userId = intval($_GET['id']);
-
-    // Atualizar o estado de aprovação no banco de dados
-    $sql = "UPDATE userdata SET aprovado = 1 WHERE id = :id";
-    $stmt = $conn->prepare($sql);
-    $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
-
-    if ($stmt->execute()) {
-        // Buscar o email e o username do utilizador aprovado
-        $sql = "SELECT email, username FROM userdata WHERE id = :id";
-        $stmt = $conn->prepare($sql);
-        $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
-        $stmt->execute();
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if ($user) {
-            // Enviar email de aprovação
-            enviarEmailAprovacao($user['email'], $user['username']);
-        }
-
-        header("Location: aprovar_contas.php?success=1");
-        exit();
-    } else {
-        header("Location: aprovar_contas.php?error=1");
-        exit();
-    }
-}
+$notas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html lang="pt">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>MyNotes</title>
+    <title>Aprovar Notas - MyNotes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <script>
-        // Função para confirmar exclusão
-        function confirmarExclusao(userId) {
-            if (confirm("Tem certeza de que deseja apagar este utilizador? Esta ação não pode ser desfeita!")) {
-                window.location.href = "process.php?action=delete&id=" + userId;
-            }
-        }
-    </script>
 </head>
-
 <body>
-
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container-fluid">
@@ -126,94 +69,62 @@ if (isset($_GET['action']) && $_GET['action'] === 'approve' && isset($_GET['id']
 
     <!-- Conteúdo Principal -->
     <div class="content container mt-5">
-        <h2 class="mb-4">Gestão de Utilizadores</h2>
+        <h2 class="mb-4">Notas para Aprovação</h2>
         <table class="table table-striped">
             <thead class="table-dark">
                 <tr>
-                    <th>ID</th>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Aprovado</th>
-                    <th>Admin</th>
+                    <th>Utilizador</th>
+                    <th>Cadeira</th>
+                    <th>Título</th>
+                    <th>Descrição</th>
+                    <th>Estado</th>
                     <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
-                <?php foreach ($users as $user): ?>
-                    <tr>
-                        <td><?= htmlspecialchars($user['id']) ?></td>
-                        <td><?= htmlspecialchars($user['username']) ?></td>
-                        <td><?= htmlspecialchars($user['email']) ?></td>
-                        <td><?= $user['aprovado'] ? "✔️ Aprovado" : "❌ Pendente" ?></td>
-                        <td>
-                            <?php
-                            if ($user['admin'] == 2) {
-                                echo "Administrador 🛠️";
-                            } elseif ($user['admin'] == 1) {
-                                echo "Moderador 👨‍🏫";
-                            } else {
-                                echo "Utilizador 🧑‍🎓";
-                            }
-                            ?>
-                        </td>
-                        <td>
-                            <div class="dropdown">
-                                <button class="btn btn-primary dropdown-toggle" type="button"
-                                    data-bs-toggle="dropdown">Ações</button>
-                                <ul class="dropdown-menu">
-                                    <?php
-                                    $emailIpcb = str_ends_with($user['email'], '@ipcb.pt');
-                                    $adminLevel = $_SESSION['admin'] ?? 0;
-                                    ?>
-
-                                    <?php if ($user['aprovado'] == 0): ?>
-                                        <li><a class="dropdown-item text-success"
-                                                href="aprovar_contas.php?action=approve&id=<?= $user['id'] ?>">✅ Aprovar</a>
-                                        </li>
-                                    <?php endif; ?>
-
-                                    <?php if ($adminLevel == 2 && $emailIpcb): ?>
-                                        <?php if ($user['admin'] == 0): ?>
-                                            <li><a class="dropdown-item text-success"
-                                                    href="process.php?action=promote&id=<?= $user['id'] ?>">⬆️ Promover a
-                                                    Moderador</a></li>
-                                            <li><a class="dropdown-item text-warning"
-                                                    href="process.php?action=promote2&id=<?= $user['id'] ?>">⬆️ Promover a Admin</a>
-                                            </li>
-                                        <?php elseif ($user['admin'] == 1): ?>
-                                            <li><a class="dropdown-item text-warning"
-                                                    href="process.php?action=promote2&id=<?= $user['id'] ?>">⬆️ Promover a Admin</a>
-                                            </li>
-                                            <li><a class="dropdown-item text-secondary"
-                                                    href="process.php?action=demote&id=<?= $user['id'] ?>&to=0">⬇️ Despromover para
-                                                    Utilizador</a></li>
-                                        <?php elseif ($user['admin'] == 2): ?>
-                                            <li><a class="dropdown-item text-secondary"
-                                                    href="process.php?action=demote&id=<?= $user['id'] ?>&to=1">⬇️ Despromover para
-                                                    Moderador</a></li>
-                                            <li><a class="dropdown-item text-secondary"
-                                                    href="process.php?action=demote&id=<?= $user['id'] ?>&to=0">⬇️ Despromover para
-                                                    Utilizador</a></li>
-                                        <?php endif; ?>
-                                    <?php endif; ?>
-
-                                    <?php if ($adminLevel == 2 && $_SESSION['user_id'] != $user['id']): ?>
-                                        <li><a class="dropdown-item text-danger" href="#"
-                                                onclick="confirmarExclusao(<?= $user['id'] ?>)">🗑️ Apagar</a></li>
-                                    <?php endif; ?>
-                                </ul>
-                            </div>
-
-
-                        </td>
-                    </tr>
+                <?php foreach ($notas as $nota): ?>
+                <tr>
+                    <td><?= htmlspecialchars($nota['username']) ?></td>
+                    <td><?= htmlspecialchars($nota['cadeira_nome'] ?? '—') ?></td>
+                    <td><?= htmlspecialchars($nota['title']) ?></td>
+                    <td><?= nl2br(htmlspecialchars($nota['content'])) ?></td>
+                    <td>
+                        <?php
+                        if ($nota['private_status'] == 2) {
+                            echo '<span class="text-warning">A aguardar aprovação</span>';
+                        } elseif ($nota['private_status'] == 0) {
+                            echo '<span class="text-success">Aceite</span>';
+                        }
+                        ?>
+                    </td>
+                    <td>
+                        <div class="dropdown">
+                            <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                Ações
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="ver_nota.php?id=<?= $nota['id'] ?>">👁️ Ver Ficheiro</a>
+                                </li>
+                                <?php if ($nota['private_status'] == 2): ?>
+                                    <li>
+                                        <a class="dropdown-item text-success"
+                                           href="?action=aprovar&id=<?= $nota['id'] ?>">✅ Aprovar</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item text-danger"
+                                           href="?action=recusar&id=<?= $nota['id'] ?>">❌ Recusar</a>
+                                    </li>
+                                <?php endif; ?>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
                 <?php endforeach; ?>
             </tbody>
         </table>
-
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
-
-</html> 
+</html>

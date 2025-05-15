@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 15-Maio-2025 às 16:22
+-- Tempo de geração: 15-Maio-2025 às 19:41
 -- Versão do servidor: 10.4.32-MariaDB
 -- versão do PHP: 8.0.30
 
@@ -83,6 +83,7 @@ INSERT INTO `escolas` (`id`, `nome`) VALUES
 CREATE TABLE `notes` (
   `id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
+  `id_cadeira` int(11) DEFAULT NULL,
   `title` varchar(255) NOT NULL,
   `content` text NOT NULL,
   `private_status` tinyint(2) NOT NULL DEFAULT 1,
@@ -94,9 +95,9 @@ CREATE TABLE `notes` (
 -- Extraindo dados da tabela `notes`
 --
 
-INSERT INTO `notes` (`id`, `user_id`, `title`, `content`, `private_status`, `created_at`, `updated_at`) VALUES
-(17, 10, 'TESTE', 'tA', 1, '2025-05-15 14:16:37', '2025-05-15 14:16:37'),
-(19, 10, '2', '2', 1, '2025-05-15 14:21:06', '2025-05-15 14:21:06');
+INSERT INTO `notes` (`id`, `user_id`, `id_cadeira`, `title`, `content`, `private_status`, `created_at`, `updated_at`) VALUES
+(17, 10, NULL, 'TESTE', 'tA', 0, '2025-05-15 14:16:37', '2025-05-15 14:47:37'),
+(19, 10, NULL, '2', '2', 1, '2025-05-15 14:21:06', '2025-05-15 14:21:06');
 
 -- --------------------------------------------------------
 
