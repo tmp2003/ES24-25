@@ -77,7 +77,8 @@ $escola = $_SESSION["escola"];
         <a href="apontamentos.php">Meus Apontamentos</a>
 
         <?php if ($isAdmin): ?>
-            <a href="aprovar_contas.php" class="text-warning fw-bold">Aprovações</a>
+            <a href="aprovar_contas.php" class="text-warning fw-bold">Aprovações de Contas</a>
+            <a href="aprovar_notas.php" class="text-warning fw-bold">Aprovações de Notas</a>
         <?php endif; ?>
     </div>
 

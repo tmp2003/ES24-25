@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Tempo de geração: 13-Maio-2025 às 17:59
--- Versão do servidor: 10.4.28-MariaDB
--- versão do PHP: 8.2.4
+-- Tempo de geração: 15-Maio-2025 às 16:22
+-- Versão do servidor: 10.4.32-MariaDB
+-- versão do PHP: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -85,7 +85,7 @@ CREATE TABLE `notes` (
   `user_id` int(11) NOT NULL,
   `title` varchar(255) NOT NULL,
   `content` text NOT NULL,
-  `is_private` tinyint(1) NOT NULL DEFAULT 1,
+  `private_status` tinyint(2) NOT NULL DEFAULT 1,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -94,9 +94,9 @@ CREATE TABLE `notes` (
 -- Extraindo dados da tabela `notes`
 --
 
-INSERT INTO `notes` (`id`, `user_id`, `title`, `content`, `is_private`, `created_at`, `updated_at`) VALUES
-(13, 10, 'Teste', 'Testeeeeeejibrigbwjibgbonaesf', 1, '2025-05-12 15:48:34', '2025-05-12 16:13:53'),
-(14, 10, 'ADA', 'FAF', 1, '2025-05-12 16:13:43', '2025-05-12 16:13:43');
+INSERT INTO `notes` (`id`, `user_id`, `title`, `content`, `private_status`, `created_at`, `updated_at`) VALUES
+(17, 10, 'TESTE', 'tA', 1, '2025-05-15 14:16:37', '2025-05-15 14:16:37'),
+(19, 10, '2', '2', 1, '2025-05-15 14:21:06', '2025-05-15 14:21:06');
 
 -- --------------------------------------------------------
 
@@ -111,6 +111,13 @@ CREATE TABLE `note_files` (
   `file_type` varchar(50) NOT NULL,
   `uploaded_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Extraindo dados da tabela `note_files`
+--
+
+INSERT INTO `note_files` (`id`, `note_id`, `file_path`, `file_type`, `uploaded_at`) VALUES
+(20, 19, './docs/10/19/202504141912_capa.jpeg', 'jpeg', '2025-05-15 14:21:06');
 
 -- --------------------------------------------------------
 
@@ -200,13 +207,13 @@ ALTER TABLE `escolas`
 -- AUTO_INCREMENT de tabela `notes`
 --
 ALTER TABLE `notes`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
 
 --
 -- AUTO_INCREMENT de tabela `note_files`
 --
 ALTER TABLE `note_files`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT de tabela `userdata`
