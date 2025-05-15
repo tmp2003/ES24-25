@@ -52,32 +52,77 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bindParam(":user_id", $id, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
-            // Processar upload de ficheiros
-            if (isset($_FILES['files']) && is_array($_FILES['files']['name'])) {
-                foreach ($_FILES['files']['name'] as $key => $fileName) {
-                    if (!empty($fileName)) {
-                        $fileTmp = $_FILES['files']['tmp_name'][$key];
-                        $filePath = "uploads/" . basename($fileName);
+            // Mapear ficheiros existentes por nome
+            $existingFilesByName = [];
+            foreach ($files as $file) {
+                $existingFilesByName[basename($file['file_path'])] = $file;
+            }
 
-                        if (move_uploaded_file($fileTmp, $filePath)) {
-                            $stmtFile = $conn->prepare("INSERT INTO note_files (note_id, file_path) VALUES (:note_id, :file_path)");
-                            $stmtFile->bindParam(":note_id", $noteId, PDO::PARAM_INT);
-                            $stmtFile->bindParam(":file_path", $filePath, PDO::PARAM_STR);
-                            $stmtFile->execute();
+            // Processar upload de novos ficheiros
+            if (isset($_FILES['files']) && is_array($_FILES['files']['name'])) {
+                $extensoesPermitidas = ['jpg', 'jpeg', 'png', 'pdf', 'docx'];
+                $tiposMimePermitidos = [
+                    'image/jpeg', 'image/png', 'application/pdf',
+                    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                ];
+
+                for ($i = 0; $i < count($_FILES['files']['name']); $i++) {
+                    $fileError = $_FILES['files']['error'][$i];
+                    $fileName = $_FILES['files']['name'][$i];
+                    $tmpName = $_FILES['files']['tmp_name'][$i];
+
+                    if (!empty($tmpName) && $fileError === UPLOAD_ERR_OK) {
+                        $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                        $mimeType = mime_content_type($tmpName);
+
+                        if (in_array($fileExt, $extensoesPermitidas) && in_array($mimeType, $tiposMimePermitidos)) {
+                            $diretorioDestino = "./docs/$id/$noteId/";
+                            if (!is_dir($diretorioDestino)) {
+                                mkdir($diretorioDestino, 0777, true);
+                            }
+
+                            $filePath = $diretorioDestino . basename($fileName);
+
+                            // Se já existe um ficheiro com o mesmo nome, substitui
+                            if (isset($existingFilesByName[$fileName])) {
+                                // Apaga o ficheiro antigo do servidor e da base de dados
+                                if (file_exists($existingFilesByName[$fileName]['file_path'])) {
+                                    unlink($existingFilesByName[$fileName]['file_path']);
+                                }
+                                $stmtDelete = $conn->prepare("DELETE FROM note_files WHERE id = :file_id");
+                                $stmtDelete->bindParam(":file_id", $existingFilesByName[$fileName]['id'], PDO::PARAM_INT);
+                                $stmtDelete->execute();
+                                // Remove do array para não tentar apagar de novo depois
+                                unset($existingFilesByName[$fileName]);
+                            }
+
+                            if (move_uploaded_file($tmpName, $filePath)) {
+                                $sqlFile = "INSERT INTO note_files (note_id, file_path, file_type) VALUES (:note_id, :file_path, :file_type)";
+                                $stmtFile = $conn->prepare($sqlFile);
+                                $stmtFile->bindParam(":note_id", $noteId, PDO::PARAM_INT);
+                                $stmtFile->bindParam(":file_path", $filePath, PDO::PARAM_STR);
+                                $stmtFile->bindParam(":file_type", $fileExt, PDO::PARAM_STR);
+                                $stmtFile->execute();
+                            }
+                        } else {
+                            $error .= "Ficheiro não permitido: $fileName<br>";
                         }
                     }
                 }
             }
 
-            header("Location: apontamentos.php");
-            exit();
+            // Não apaga ficheiros existentes, a não ser que o utilizador clique em remover (feito abaixo)
+            if (empty($error)) {
+                header("Location: apontamentos.php");
+                exit();
+            }
         } else {
             $error = "Erro ao atualizar a nota!";
         }
     }
 }
 
-// Remover ficheiro
+// Remover ficheiro manualmente
 if (isset($_GET['delete_file'])) {
     $fileId = intval($_GET['delete_file']);
     $stmtFile = $conn->prepare("SELECT * FROM note_files WHERE id = :file_id AND note_id = :note_id");
@@ -87,7 +132,9 @@ if (isset($_GET['delete_file'])) {
     $file = $stmtFile->fetch(PDO::FETCH_ASSOC);
 
     if ($file) {
-        unlink($file['file_path']); // Apagar o ficheiro do servidor
+        if (file_exists($file['file_path'])) {
+            unlink($file['file_path']); // Apagar o ficheiro do servidor
+        }
         $stmtDelete = $conn->prepare("DELETE FROM note_files WHERE id = :file_id");
         $stmtDelete->bindParam(":file_id", $fileId, PDO::PARAM_INT);
         $stmtDelete->execute();
@@ -117,12 +164,6 @@ if (isset($_GET['delete_file'])) {
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav w-100 align-items-center">
-                    <li class="nav-item mx-auto search-form">
-                        <form class="d-flex">
-                            <input class="form-control me-2" type="search" placeholder="Procurar Notas" aria-label="Search">
-                            <button class="btn btn-outline-success" type="submit">Procurar</button>
-                        </form>
-                    </li>
                     <li class="nav-item">
                         <a class="nav-link" href="logout.php">Sair</a>
                     </li>

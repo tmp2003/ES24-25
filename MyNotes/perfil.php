@@ -106,13 +106,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav w-100 align-items-center">
-                    <li class="nav-item mx-auto search-form">
-                        <form class="d-flex">
-                            <input class="form-control me-2" type="search" placeholder="Procurar Notas"
-                                aria-label="Search">
-                            <button class="btn btn-outline-success" type="submit">Procurar</button>
-                        </form>
-                    </li>
                     <?php if (isset($_SESSION["user_id"])): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="logout.php">Sair</a>
