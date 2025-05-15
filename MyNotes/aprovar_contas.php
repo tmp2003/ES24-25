@@ -1,6 +1,10 @@
 <?php
 session_start();
 require_once "config.php";
+require 'vendor/autoload.php'; // Carregar o PHPMailer
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 // Verifica se o utilizador está logado
 if (!isset($_SESSION["user_id"])) {
@@ -17,6 +21,67 @@ $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
 // Dados do utilizador logado
 $username = $_SESSION["username"];
 $isAdmin = $_SESSION["is_admin"] ?? false;
+
+// Função para enviar email ao utilizador aprovado
+function enviarEmailAprovacao($email, $username)
+{
+    $mail = new PHPMailer(true);
+    try {
+        // Configurações do servidor SMTP
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com'; // Servidor SMTP do Gmail
+        $mail->SMTPAuth = true;
+        $mail->Username = 'mynotesnoreply@gmail.com'; // Substitua pelo seu email do Gmail
+        $mail->Password = 'lubr xyeb ewxx zena'; // Substitua pela senha de aplicativo gerada
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+
+        // Configurações do email
+        $mail->CharSet = 'UTF-8';
+        $mail->setFrom('mynotesnoreply@gmail.com', 'MyNotes'); // Substitua pelo seu email
+        $mail->addAddress($email, $username);
+        $mail->isHTML(true);
+        $mail->Subject = 'Conta Aprovada - MyNotes';
+        $mail->Body = "<p>Olá <b>$username</b>,</p>
+                       <p>A sua conta foi aprovada por um administrador. Já pode acessar o site e utilizar os nossos serviços.</p>
+                       <p>Obrigado por utilizar o MyNotes!</p>";
+
+        $mail->send();
+    } catch (Exception $e) {
+        // Log de erro (opcional)
+        error_log("Erro ao enviar email: {$mail->ErrorInfo}");
+    }
+}
+
+// Processar ações de aprovação
+if (isset($_GET['action']) && $_GET['action'] === 'approve' && isset($_GET['id'])) {
+    $userId = intval($_GET['id']);
+
+    // Atualizar o estado de aprovação no banco de dados
+    $sql = "UPDATE userdata SET aprovado = 1 WHERE id = :id";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
+
+    if ($stmt->execute()) {
+        // Buscar o email e o username do utilizador aprovado
+        $sql = "SELECT email, username FROM userdata WHERE id = :id";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':id', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($user) {
+            // Enviar email de aprovação
+            enviarEmailAprovacao($user['email'], $user['username']);
+        }
+
+        header("Location: aprovar_contas.php?success=1");
+        exit();
+    } else {
+        header("Location: aprovar_contas.php?error=1");
+        exit();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -49,13 +114,6 @@ $isAdmin = $_SESSION["is_admin"] ?? false;
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav w-100 align-items-center">
-                    <li class="nav-item mx-auto search-form" style="width: 50%;">
-                        <form class="d-flex">
-                            <input class="form-control me-2 w-100" type="search" placeholder="Procurar Notas"
-                                aria-label="Search">
-                            <button class="btn btn-outline-success" type="submit">Procurar</button>
-                        </form>
-                    </li>
                     <?php if (isset($_SESSION["user_id"])): ?>
                         <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
                     <?php else: ?>
@@ -110,7 +168,8 @@ $isAdmin = $_SESSION["is_admin"] ?? false;
 
                                     <?php if ($user['aprovado'] == 0): ?>
                                         <li><a class="dropdown-item text-success"
-                                                href="process.php?action=approve&id=<?= $user['id'] ?>">✅ Aprovar</a></li>
+                                                href="aprovar_contas.php?action=approve&id=<?= $user['id'] ?>">✅ Aprovar</a>
+                                        </li>
                                     <?php endif; ?>
 
                                     <?php if ($adminLevel == 2 && $emailIpcb): ?>

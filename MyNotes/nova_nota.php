@@ -2,33 +2,44 @@
 session_start();
 require_once 'config.php';
 
+// Verificar se o utilizador está autenticado
 if (!isset($_SESSION["user_id"])) {
     header("Location: login.php");
     exit();
 }
 
+// Atribuir variáveis da sessão
 $id = $_SESSION["user_id"];
 $username = $_SESSION["username"];
-$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
 $escola = $_SESSION["escola"];
+$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
+
+
+
+$escola = $_SESSION["escola"]; // ID da escola do utilizador
 $error = "";
 
+// Processar o formulário de criação de nota
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $title = trim($_POST["title"]);
     $text = trim($_POST["text"]);
 
+    // Validar o título
     if (empty($title)) {
         $error = "O título é obrigatório!";
     } else {
-        $sql = "INSERT INTO notes (user_id, title, content) VALUES (:user_id, :title, :content)";
+        // Inserir a nota no banco de dados
+        $sql = "INSERT INTO notes (user_id, title, content, escola) VALUES (:user_id, :title, :content, :escola)";
         $stmt = $conn->prepare($sql);
-        $stmt->bindParam(":user_id", $id, PDO::PARAM_STR);
+        $stmt->bindParam(":user_id", $id, PDO::PARAM_INT);
         $stmt->bindParam(":title", $title, PDO::PARAM_STR);
         $stmt->bindParam(":content", $text, PDO::PARAM_STR);
+        $stmt->bindParam(":escola", $escola, PDO::PARAM_INT); // Adicionar o ID da escola
 
         if ($stmt->execute()) {
             $noteId = $conn->lastInsertId();
 
+            // Processar os ficheiros enviados
             if (isset($_FILES['Files']) && is_array($_FILES['Files']['name'])) {
                 $extensoesPermitidas = ['jpg', 'jpeg', 'png', 'pdf', 'docx'];
                 $tiposMimePermitidos = [
@@ -41,7 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $fileName = $_FILES['Files']['name'][$i];
                     $tmpName = $_FILES['Files']['tmp_name'][$i];
 
-                    // Verificar se o arquivo foi enviado
+                    // Verificar se o ficheiro foi enviado
                     if (!empty($tmpName) && $fileError === UPLOAD_ERR_OK) {
                         $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
                         $mimeType = mime_content_type($tmpName);
@@ -68,6 +79,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
 
+            // Redirecionar se não houver erros
             if (empty($error)) {
                 header("Location: index.php");
                 exit();
@@ -99,7 +111,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav w-100 align-items-center">
-                    <li class="nav-item mx-auto search-form">
+                    <li class="nav-item mx-auto search-form" style="width: 50%;">
                         <form class="d-flex">
                             <input class="form-control me-2" type="search" placeholder="Procurar Notas" aria-label="Search">
                             <button class="btn btn-outline-success" type="submit">Procurar</button>

@@ -39,7 +39,7 @@ $escola = $_SESSION["escola"];
                 <ul class="navbar-nav w-100 align-items-center">
 
                     <!-- Barra de Pesquisa Centralizada -->
-                    <li class="nav-item mx-auto search-form">
+                    <li class="nav-item mx-auto search-form" style="width: 50%;">
                         <form class="d-flex">
                             <input class="form-control me-2" type="search" placeholder="Procurar Notas"
                                 aria-label="Search">
@@ -77,7 +77,8 @@ $escola = $_SESSION["escola"];
         <a href="apontamentos.php">Meus Apontamentos</a>
 
         <?php if ($isAdmin): ?>
-            <a href="aprovar_contas.php" class="text-warning fw-bold">Aprovações</a>
+            <a href="aprovar_contas.php" class="text-warning fw-bold">Aprovações de Contas</a>
+            <a href="aprovar_notas.php" class="text-warning fw-bold">Aprovações de Notas</a>
         <?php endif; ?>
     </div>
 

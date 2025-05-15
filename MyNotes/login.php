@@ -11,7 +11,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $error = "Formato de email inválido!";
     } elseif (!empty($email) && !empty($password)) {
         // Consulta SQL para verificar o utilizador
-        $sql = "SELECT id, username, email, password, aprovado, admin FROM userdata WHERE email = :email";
+        $sql = "SELECT id, username, email, password, aprovado, admin, escola FROM userdata WHERE email = :email";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":email", $email, PDO::PARAM_STR);
         $stmt->execute();
@@ -27,7 +27,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 $_SESSION["username"] = $user["username"];
                 $_SESSION["email"] = $user["email"];
                 $_SESSION["admin"] = $user["admin"];
-                $_SESSION["escola"] = $user["escola"];
+                $_SESSION["escola"] = $user["escola"]; // Adicionar o ID da escola à sessão
                 
                 header("Location: index.php"); // Redirecionar após login
                 exit();
