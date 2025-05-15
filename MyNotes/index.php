@@ -86,6 +86,56 @@ $escola = $_SESSION["escola"];
     <div class="content">
         <h1>Bem-vindo ao MyNotes</h1>
         <p class="lead">Organize suas anotações de forma fácil e prática.</p>
+
+        <h2>Publicações Aprovadas</h2>
+        <?php
+        // Conexão com a base de dados
+        $conn = new mysqli("localhost", "root", "", "notesdb");
+
+        // Verificar conexão
+        if ($conn->connect_error) {
+            die("Erro de conexão: " . $conn->connect_error);
+        }
+
+        // Obter as publicações aprovadas da mesma escola do utilizador
+        $sql = "SELECT n.id, n.title, n.content, nf.file_path 
+        FROM notes n 
+        LEFT JOIN note_files nf ON n.id = nf.note_id 
+        WHERE n.private_status = 0 AND n.escola = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $escola);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // Verificar se existem publicações
+        if ($result->num_rows > 0):
+            while ($row = $result->fetch_assoc()):
+                ?>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title"><?php echo htmlspecialchars($row["title"]); ?></h5>
+                        <p class="card-text"><?php echo nl2br(htmlspecialchars($row["content"])); ?></p>
+                        <?php if (!empty($row["file_path"])): ?>
+                            <div class="d-flex align-items-center">
+                                <span class="me-3"><?php echo htmlspecialchars(basename($row["file_path"])); ?></span>
+                                <a href="<?php echo htmlspecialchars($row["file_path"]); ?>" class="btn btn-primary"
+                                    download>Descarregar Documento</a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <?php
+            endwhile;
+        else:
+            ?>
+            <p>Não há publicações aprovadas disponíveis no momento.</p>
+            <?php
+        endif;
+
+        // Fechar conexão
+        $stmt->close();
+        $conn->close();
+        ?>
     </div>
 
     <!-- Bootstrap 5 JS -->
