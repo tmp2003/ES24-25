@@ -122,6 +122,8 @@ $escola = $_SESSION["escola"];
                                     download>Descarregar Documento</a>
                             </div>
                         <?php endif; ?>
+                        <a href="publicacao.php?id=<?php echo $row['id']; ?>" class="btn btn-secondary mt-3">Ver Detalhes e
+                            Comentar</a>
                     </div>
                 </div>
                 <?php

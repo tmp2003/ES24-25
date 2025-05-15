@@ -138,6 +138,23 @@ CREATE TABLE `note_files` (
 INSERT INTO `note_files` (`id`, `note_id`, `file_path`, `file_type`, `uploaded_at`) VALUES
 (20, 19, './docs/10/19/202504141912_capa.jpeg', 'jpeg', '2025-05-15 14:21:06');
 
+
+CREATE TABLE `comments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `note_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `comment` text NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `fk_comments_note` (`note_id`),
+  KEY `fk_comments_user` (`user_id`),
+  CONSTRAINT `fk_comments_note` FOREIGN KEY (`note_id`) REFERENCES `notes` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_comments_user` FOREIGN KEY (`user_id`) REFERENCES `userdata` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+INSERT INTO `comments` (`note_id`, `user_id`, `comment`, `created_at`) 
+VALUES (22, 7, 'Ótimo documento', NOW());
+
 -- Finalizar transação
 COMMIT;
 
