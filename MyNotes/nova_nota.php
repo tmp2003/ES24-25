@@ -14,27 +14,35 @@ $username = $_SESSION["username"];
 $escola = $_SESSION["escola"];
 $isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
 
-
-
-$escola = $_SESSION["escola"]; // ID da escola do utilizador
 $error = "";
+
+// Buscar cadeiras da escola do utilizador
+$stmtCadeiras = $conn->prepare("SELECT id, nome FROM cadeiras WHERE escola_id = :escola_id");
+$stmtCadeiras->bindParam(":escola_id", $escola, PDO::PARAM_INT);
+$stmtCadeiras->execute();
+$cadeiras = $stmtCadeiras->fetchAll(PDO::FETCH_ASSOC);
 
 // Processar o formulário de criação de nota
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $title = trim($_POST["title"]);
     $text = trim($_POST["text"]);
+    $id_cadeira = isset($_POST["id_cadeira"]) ? intval($_POST["id_cadeira"]) : null;
 
-    // Validar o título
+    // Validar o título e a cadeira
     if (empty($title)) {
         $error = "O título é obrigatório!";
+    } elseif (empty($id_cadeira)) {
+        $error = "Deve selecionar uma cadeira!";
     } else {
         // Inserir a nota no banco de dados
-        $sql = "INSERT INTO notes (user_id, title, content, escola) VALUES (:user_id, :title, :content, :escola)";
+        $sql = "INSERT INTO notes (user_id, title, content, escola, id_cadeira, private_status) 
+                VALUES (:user_id, :title, :content, :escola, :id_cadeira, 1)";
         $stmt = $conn->prepare($sql);
         $stmt->bindParam(":user_id", $id, PDO::PARAM_INT);
         $stmt->bindParam(":title", $title, PDO::PARAM_STR);
         $stmt->bindParam(":content", $text, PDO::PARAM_STR);
-        $stmt->bindParam(":escola", $escola, PDO::PARAM_INT); // Adicionar o ID da escola
+        $stmt->bindParam(":escola", $escola, PDO::PARAM_INT);
+        $stmt->bindParam(":id_cadeira", $id_cadeira, PDO::PARAM_INT);
 
         if ($stmt->execute()) {
             $noteId = $conn->lastInsertId();
@@ -137,7 +145,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <?php endif; ?>
     </div>
 
-    <form method="POST" enctype="multipart/form-data">
+    <form method="POST" enctype="multipart/form-data" id="notaForm">
         <div class="content">
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger"><?= $error ?></div>
@@ -150,6 +158,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             <div class="mb-3">
                 <label for="text" class="form-label">Conteúdo da Nota</label>
                 <textarea class="form-control" name="text" rows="10"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="cadeiraSelect" class="form-label">Cadeira</label>
+                <select class="form-select" id="cadeiraSelect" name="id_cadeira" required>
+                    <option value="">Escolha uma cadeira...</option>
+                    <?php foreach ($cadeiras as $cadeira): ?>
+                        <option value="<?= $cadeira['id'] ?>"><?= htmlspecialchars($cadeira['nome']) ?></option>
+                    <?php endforeach; ?>
+                </select>
             </div>
             <div class="mb-3">
                 <label for="formFileMultiple" class="form-label">Anexar ficheiros</label>

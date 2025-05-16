@@ -12,9 +12,19 @@ if (!isset($_SESSION["user_id"])) {
 $user_id = $_SESSION["user_id"];
 $username = $_SESSION["username"];
 $isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
+$escola = $_SESSION["escola"];
+
+// Publicar nota (mudar private_status para 2)
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["publicar_note_id"])) {
+    $noteId = intval($_POST["publicar_note_id"]);
+    $stmtPub = $conn->prepare("UPDATE notes SET private_status = 2 WHERE id = ? AND user_id = ?");
+    $stmtPub->execute([$noteId, $user_id]);
+    header("Location: apontamentos.php");
+    exit();
+}
 
 // Buscar todas as notas do utilizador ordenadas por data
-$stmt = $conn->prepare("SELECT id, title, content, created_at FROM notes WHERE user_id = ? ORDER BY created_at DESC");
+$stmt = $conn->prepare("SELECT id, title, content, created_at, private_status FROM notes WHERE user_id = ? ORDER BY created_at DESC");
 $stmt->execute([$user_id]);
 $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -50,16 +60,17 @@ $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </nav>
 
-    <!-- Sidebar -->
+    <!-- Sidebar (Navbar Vertical) -->
     <div class="sidebar" style="text-align: center;">
         <a href="perfil.php" style="border: none; background: none; padding: 0;">
             <img src="./img/avatar.png" class="rounded-circle" style="width: 80px; border: none;" alt="Avatar" />
         </a>
         <p></p>
-        <a href="index.php">Página Principal</a>
+        <a href="#">Página Principal</a>
         <a href="apontamentos.php">Meus Apontamentos</a>
         <?php if ($isAdmin): ?>
-            <a href="aprovar_contas.php" class="text-warning fw-bold">Aprovações</a>
+            <a href="aprovar_contas.php" class="text-warning fw-bold">Aprovações de Contas</a>
+            <a href="aprovar_notas.php" class="text-warning fw-bold">Aprovações de Notas</a>
         <?php endif; ?>
     </div>
 
@@ -113,6 +124,16 @@ $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <input type="hidden" name="note_id" value="<?= $note['id'] ?>">
                                         <button type="submit" class="btn btn-sm btn-danger">Apagar</button>
                                     </form>
+                                    <?php if ($note['private_status'] == 1): ?>
+                                        <form action="apontamentos.php" method="POST" class="d-inline">
+                                            <input type="hidden" name="publicar_note_id" value="<?= $note['id'] ?>">
+                                            <button type="submit" class="btn btn-sm btn-success">Publicar</button>
+                                        </form>
+                                    <?php elseif($note['private_status'] == 0): ?>
+                                        <span class="badge bg-success">Publicada</span>
+                                    <?php else: ?>
+                                        <span class="badge bg-success">A aguardar aprovação de moderadores</span>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>

@@ -136,12 +136,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <select class="form-select" aria-label="Default select example"
                                                 name="escola" required>
                                                 <option value="Escola" selected>Escola</option>
-                                                <option value="ESART">ESART</option>
-                                                <option value="ESA">ESA</option>
-                                                <option value="ESE">ESE</option>
-                                                <option value="EST">EST</option>
-                                                <option value="ESGIN">ESGIN</option>
-                                                <option value="ESALD">ESALD</option>
+                                                <option value="2">ESART</option>
+                                                <option value="1">ESA</option>
+                                                <option value="3">ESE</option>
+                                                <option value="6">EST</option>
+                                                <option value="5">ESGIN</option>
+                                                <option value="4">ESALD</option>
                                             </select>
                                         </div>
                                         <div class="pt-1 mb-3">
