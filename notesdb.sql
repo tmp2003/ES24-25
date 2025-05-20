@@ -5,7 +5,11 @@
 -- Host: 127.0.0.1
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 -- Tempo de geração: 15-Maio-2025 às 19:41
+=======
+-- Tempo de geração: 20-Maio-2025 às 17:06
+>>>>>>> Stashed changes
 =======
 -- Tempo de geração: 20-Maio-2025 às 17:06
 >>>>>>> Stashed changes
