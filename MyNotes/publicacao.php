@@ -46,12 +46,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["delete_comment_id"]) 
     exit();
 }
 
-// Adicionar novo comentário
+// Adicionar novo comentário com verificação de palavras proibidas
+$comentario_erro = "";
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["comment"])) {
     $comment = trim($_POST["comment"]);
     $user_id = $_SESSION["user_id"];
 
-    if (!empty($comment)) {
+    // Lista de palavras proibidas
+    $bad_words = ['merda', 'puta', 'fodasse', 'shiy', 'fuck'];
+
+    $has_bad_word = false;
+    foreach ($bad_words as $bad_word) {
+        if (stripos($comment, $bad_word) !== false) {
+            $has_bad_word = true;
+            break;
+        }
+    }
+
+    if ($has_bad_word) {
+        $comentario_erro = "O seu comentário contém linguagem imprópria e não foi publicado.";
+    } elseif (!empty($comment)) {
         $sql_insert = "INSERT INTO comments (note_id, user_id, comment) VALUES (?, ?, ?)";
         $stmt_insert = $conn->prepare($sql_insert);
         $stmt_insert->bind_param("iis", $note_id, $user_id, $comment);
@@ -148,6 +162,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["comment"])) {
 
         <hr>
         <h4>Adicionar Comentário</h4>
+        <?php if (!empty($comentario_erro)): ?>
+            <div class="alert alert-danger text-center"><?php echo $comentario_erro; ?></div>
+        <?php endif; ?>
         <form method="POST">
             <div class="mb-3">
                 <textarea name="comment" class="form-control" rows="3" placeholder="Escreva seu comentário aqui..." required></textarea>
