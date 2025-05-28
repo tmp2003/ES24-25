@@ -1,12 +1,21 @@
 /* Sidebar (Navbar Vertical) */
-.sidebar{
+.sidebar {
     width: 250px;
     height: 100vh;
     position: fixed;
     left: 0;
-    top: 56px; /* Para não cobrir a navbar superior */
+    top: 56px;
+    /* Para não cobrir a navbar superior */
     padding-top: 20px;
     box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    background-color: #131519 !important;
+}
+
+.comentario-texto {
+    margin-top: 8px;
 }
 
 .sidebar a {
@@ -17,22 +26,134 @@
     font-weight: bold;
 }
 
+.navbar-custom {
+    background-color: #292E35 !important;
+}
+
+.navbar2nd {
+    background-color: #393e46 !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.modal-content {
+    border-radius: 12px;
+}
+
 .sidebar a:hover {
     background-color: #ddd;
 }
 
 .content {
-    margin-left: 260px; /* Mantém a sidebar visível */
+    margin-left: 260px;
+    /* Mantém a sidebar visível */
     padding: 20px;
-    max-width: calc(100% - 260px); /* Garante que o conteúdo não ultrapasse */
+    max-width: calc(100% - 260px);
+    /* Garante que o conteúdo não ultrapasse */
+    background-color: #131519;
 }
 
 .card {
-    max-width: 800px; /* Define um limite para o card */
+    max-width: 800px;
+    /* Define um limite para o card */
 }
 
 .button-secondary {
     position: absolute;
-    right: 10px; /* Ajuste conforme necessário */
+    right: 10px;
+    /* Ajuste conforme necessário */
 }
 
+.custom-card {
+    background-color: #1E2127 !important;
+    border-radius: 10px;
+    border: none;
+}
+
+
+.table-striped>tbody>tr:nth-of-type(odd)>td,
+.table-striped>tbody>tr:nth-of-type(even)>td {
+    background-color: inherit !important;
+    color: #fff !important;
+}
+
+.table-striped>tbody>tr:nth-of-type(odd) {
+    background-color: #3e4450 !important;
+}
+
+.table-striped>tbody>tr:nth-of-type(even) {
+    background-color: #353b44 !important;
+}
+
+.table td,
+.table th {
+    color: #fff !important;
+    background-color: transparent !important;
+    border: none !important;
+}
+
+.table{
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+::placeholder {
+    color: #fff !important;
+    opacity: 0.4 !important;
+}
+
+.textP{
+    background-color: #292e35;
+    color: white; 
+    border: none;
+}
+
+input[type="file"] {
+    background-color: #292e35;
+    color: #fff;
+    border: 2px solid #22252b;
+    padding: 8px;
+    border-radius: 6px;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+input[type="file"] {
+    background-color: #292e35 !important;
+    color: #fff !important;
+    border: 2px solid #22252b !important;
+    padding: 8px !important;
+    border-radius: 6px !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+}
+
+/* Botão "Escolher ficheiros" */
+input[type="file"]::file-selector-button {
+    background-color: #292e35 !important;
+    color: #fff !important;
+    border: 2px solid #22252b !important;
+    padding: 8px 18px !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    font-weight: 500 !important;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s !important;
+}
+
+/* Efeitos de hover/focus */
+input[type="file"]::file-selector-button:hover,
+input[type="file"]::file-selector-button:focus,
+input[type="file"]::file-selector-button:active {
+    background-color: #1e2127 !important;
+    color: #f1f1f1 !important;
+    border-color: #1b1e23 !important;
+}
+
+/* Para manter o fundo do campo consistente ao interagir */
+input[type="file"]:hover,
+input[type="file"]:focus,
+input[type="file"]:active {
+    background-color: #292e35 !important;
+    color: #fff !important;
+    border-color: #22252b !important;
+    box-shadow: none !important;
+}

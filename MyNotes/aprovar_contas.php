@@ -17,10 +17,10 @@ $sql = "SELECT id, username, email, aprovado, admin FROM userdata";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
 
 // Dados do utilizador logado
 $username = $_SESSION["username"];
-$isAdmin = $_SESSION["is_admin"] ?? false;
 
 // Função para enviar email ao utilizador aprovado
 function enviarEmailAprovacao($email, $username)
@@ -106,18 +106,52 @@ if (isset($_GET['action']) && $_GET['action'] === 'approve' && isset($_GET['id']
 <body>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="index.php">MyNotes</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav w-100 align-items-center">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom" style="height: 100px;">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <!-- Logo -->
+            <div class="d-flex align-items-center flex-grow-1" style="min-width:180px; margin-left: 5%;">
+                <a class="navbar-brand" href="index.php" style="margin-left: 3rem;">MyNotes</a>
+            </div>
+            <!-- Itens centrais -->
+            <div class="d-flex justify-content-center flex-grow-1">
+                <ul class="navbar-nav align-items-center gap-3">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.php">Hub</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="apontamentos.php">Apontamentos</a>
+                    </li>
+                    <?php if ($isAdmin): ?>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-warning" href="#" id="aprovacoesDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                Aprovações
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="aprovacoesDropdown">
+                                <li><a class="dropdown-item" href="aprovar_contas.php">Contas</a></li>
+                                <li><a class="dropdown-item" href="aprovar_notas.php">Notas</a></li>
+                            </ul>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+            <!-- Itens à direita -->
+            <div class="d-flex align-items-center flex-grow-1 justify-content-end" style="min-width:180px;">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="perfil.php">
+                            <img src="./img/avatar.png" class="rounded-circle" style="width: 40px; border: none;"
+                                alt="Avatar" />
+                        </a>
+                    </li>
                     <?php if (isset($_SESSION["user_id"])): ?>
-                        <li class="nav-item"><a class="nav-link" href="logout.php">Sair</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="logout.php">Sair</a>
+                        </li>
                     <?php else: ?>
-                        <li class="nav-item"><a class="nav-link" href="login.php">Login</a></li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="login.php">Login</a>
+                        </li>
                     <?php endif; ?>
                 </ul>
             </div>
@@ -125,9 +159,9 @@ if (isset($_GET['action']) && $_GET['action'] === 'approve' && isset($_GET['id']
     </nav>
 
     <!-- Conteúdo Principal -->
-    <div class="content container mt-5">
-        <h2 class="mb-4">Gestão de Utilizadores</h2>
-        <table class="table table-striped">
+    <div class="content container" style="margin-top: 3%;margin-left:8%;">
+        <h2 class="mb-4 " style="color: white;">Gestão de Utilizadores</h2>
+        <table class="table table-striped" style="background-color: #353b44; color: #fff;">
             <thead class="table-dark">
                 <tr>
                     <th>ID</th>
@@ -138,7 +172,7 @@ if (isset($_GET['action']) && $_GET['action'] === 'approve' && isset($_GET['id']
                     <th>Ações</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody style="background-color: #353b44; color: #fff;">
                 <?php foreach ($users as $user): ?>
                     <tr>
                         <td><?= htmlspecialchars($user['id']) ?></td>

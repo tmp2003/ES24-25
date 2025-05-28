@@ -1,17 +1,16 @@
 <?php
-session_start(); // Iniciar sessão
+session_start();
 
 // Verificar se o utilizador está logado
 if (!isset($_SESSION["user_id"])) {
-    header("Location: login.php"); // Se não estiver logado, redirecionar para login
+    header("Location: login.php");
     exit();
 }
 
 // Dados do utilizador logado
 $username = $_SESSION["username"];
-$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2; // Verifica se é admin
+$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
 $escola = $_SESSION["escola"];
-
 ?>
 
 <!DOCTYPE html>
@@ -23,34 +22,68 @@ $escola = $_SESSION["escola"];
     <title>MyNotes</title>
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css"> <!-- Agora contém os estilos da sidebar também -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
+
+<!-- Modal de Pesquisa -->
+<div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="background-color: #23272b;">
+            <div class="modal-body">
+                <form class="d-flex">
+                    <input class="form-control me-2" style="background-color: #363a3e;border:none;" type="search" placeholder="Procure uma título ou conteúdo..."
+                        aria-label="Search">
+                    <button class="btn btn-primary" type="submit">
+                        <i class="bi bi-arrow-right"></i> Procurar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 
 <body>
 
     <!-- Navbar Superior (Dark Mode) -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="index.php">MyNotes</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav w-100 align-items-center">
-
-                    <!-- Barra de Pesquisa Centralizada -->
-                    <li class="nav-item mx-auto search-form" style="width: 50%;">
-                        <form class="d-flex">
-                            <input class="form-control me-2" type="search" placeholder="Procurar Notas"
-                                aria-label="Search">
-                            <button class="btn btn-outline-success" type="submit">Procurar</button>
-                        </form>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom" style="height: 100px;">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <!-- Logo -->
+            <div class="d-flex align-items-center flex-grow-1" style="min-width:180px; margin-left: 5%;">
+                <a class="navbar-brand" href="index.php" style="margin-left: 3rem;">MyNotes</a>
+            </div>
+            <!-- Itens centrais -->
+            <div class="d-flex justify-content-center flex-grow-1">
+                <ul class="navbar-nav align-items-center gap-3">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.php">Hub</a>
                     </li>
-
-                    <!-- Links de Navegação -->
-
-
-                    <!-- Botão de Logout -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="apontamentos.php">Apontamentos</a>
+                    </li>
+                    <?php if ($isAdmin): ?>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-warning" href="#" id="aprovacoesDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                Aprovações
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="aprovacoesDropdown">
+                                <li><a class="dropdown-item" href="aprovar_contas.php">Contas</a></li>
+                                <li><a class="dropdown-item" href="aprovar_notas.php">Notas</a></li>
+                            </ul>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+            <!-- Itens à direita -->
+            <div class="d-flex align-items-center flex-grow-1 justify-content-end" style="min-width:180px;">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="perfil.php">
+                            <img src="./img/avatar.png" class="rounded-circle" style="width: 40px; border: none;"
+                                alt="Avatar" />
+                        </a>
+                    </li>
                     <?php if (isset($_SESSION["user_id"])): ?>
                         <li class="nav-item">
                             <a class="nav-link" href="logout.php">Sair</a>
@@ -65,80 +98,118 @@ $escola = $_SESSION["escola"];
         </div>
     </nav>
 
-    <!-- Sidebar (Navbar Vertical) -->
-    <div class="sidebar" style="text-align: center;">
-        <a href="perfil.php" style="border: none; background: none; padding: 0;">
-            <img src="./img/avatar.png" class="rounded-circle" style="width: 80px; border: none;" alt="Avatar" />
-        </a>
-
-
-        <p></p>
-        <a href="#">Página Principal</a>
-        <a href="apontamentos.php">Meus Apontamentos</a>
-
-        <?php if ($isAdmin): ?>
-            <a href="aprovar_contas.php" class="text-warning fw-bold">Aprovações de Contas</a>
-            <a href="aprovar_notas.php" class="text-warning fw-bold">Aprovações de Notas</a>
-        <?php endif; ?>
-    </div>
+    <!-- Navbar Secundária -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar2nd" style="height: 50px; background-color: #393e46;">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <div>
+                <a href="index.php" class="btn btn-link text-white text-decoration-none"
+                    style="margin-left: 50%;min-width: 180px;">
+                    <i class="bi bi-house-door-fill"></i> Home
+                </a>
+            </div>
+            <div style="min-width: 25%;">
+                <button class="btn btn-secondary d-flex align-items-center" style="min-width:60%;"
+                    data-bs-toggle="modal" data-bs-target="#searchModal">
+                    <i class="bi bi-search me-2"></i> Procurar...
+                </button>
+            </div>
+        </div>
+    </nav>
 
     <!-- Conteúdo Principal -->
-    <div class="content">
-        <h1>Bem-vindo ao MyNotes</h1>
-        <p class="lead">Organize suas anotações de forma fácil e prática.</p>
-
-        <h2>Publicações Aprovadas</h2>
-        <?php
-        // Conexão com a base de dados
-        $conn = new mysqli("localhost", "root", "", "notesdb");
-
-        // Verificar conexão
-        if ($conn->connect_error) {
-            die("Erro de conexão: " . $conn->connect_error);
-        }
-
-        // Obter as publicações aprovadas da mesma escola do utilizador
-        $sql = "SELECT n.id, n.title, n.content, nf.file_path 
-        FROM notes n 
-        LEFT JOIN note_files nf ON n.id = nf.note_id 
-        WHERE n.private_status = 0 AND n.escola = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $escola);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        // Verificar se existem publicações
-        if ($result->num_rows > 0):
-            while ($row = $result->fetch_assoc()):
-                ?>
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h5 class="card-title"><?php echo htmlspecialchars($row["title"]); ?></h5>
-                        <p class="card-text"><?php echo nl2br(htmlspecialchars($row["content"])); ?></p>
-                        <?php if (!empty($row["file_path"])): ?>
-                            <div class="d-flex align-items-center">
-                                <span class="me-3"><?php echo htmlspecialchars(basename($row["file_path"])); ?></span>
-                                <a href="<?php echo htmlspecialchars($row["file_path"]); ?>" class="btn btn-primary"
-                                    download>Descarregar Documento</a>
-                            </div>
-                        <?php endif; ?>
-                        <a href="publicacao.php?id=<?php echo $row['id']; ?>" class="btn btn-secondary mt-3">Ver Detalhes e
-                            Comentar</a>
-                    </div>
-                </div>
-                <?php
-            endwhile;
-        else:
-            ?>
-            <p>Não há publicações aprovadas disponíveis no momento.</p>
+    <div class="content"
+        style="background-color: #131519; display: flex; gap: 3%; align-items: flex-start; min-width: 100%;margin-top: 40px; margin-left: 0; margin-right: 0;">
+        <!-- Card Geral -->
+        <div class="p-4 rounded-4 shadow-lg"
+            style="background-color: #23262b; min-width: 80%; flex: 2; border-radius: 18px;">
+            <h2 class="mb-4 pb-2 border-bottom border-secondary" style="color: #fff; font-weight: bold;">Geral</h2>
+            <!-- ... conteúdo do card Geral ... -->
             <?php
-        endif;
+            // Conexão com a base de dados
+            $conn = new mysqli("localhost", "root", "", "notesdb");
 
-        // Fechar conexão
-        $stmt->close();
-        $conn->close();
-        ?>
+            // Verificar conexão
+            if ($conn->connect_error) {
+                die("Erro de conexão: " . $conn->connect_error);
+            }
+
+            // Obter as publicações aprovadas da mesma escola do utilizador
+            $sql = "SELECT n.id, n.title, n.content, n.created_at, u.username
+    FROM notes n
+    JOIN userdata    u ON n.user_id = u.id
+    WHERE n.private_status = 0 AND n.escola = ?
+    ORDER BY n.created_at DESC";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                die("Erro na preparação da query: " . $conn->error);
+            }
+            $stmt->bind_param("i", $escola);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows > 0):
+                while ($row = $result->fetch_assoc()):
+                    $data = date('d/m/Y', strtotime($row["created_at"])); // Data no formato dd/mm/yyyy
+                    ?>
+                    <div class="d-flex justify-content-between align-items-center border-bottom border-gray-800 py-4"
+                        style="border-color: #393e46 !important;">
+                        <div class="d-flex align-items-center">
+                            <!-- Ícone à esquerda -->
+                            <div class="me-3 d-flex align-items-center justify-content-center"
+                                style="width:40px; height:40px; background:#23272b; border-radius:8px;">
+                                <i class="bi bi-file-earmark" style="font-size: 1.5rem; color: #4fc3f7;"></i>
+                            </div>
+                            <div>
+                                <h3 class="mb-1" style="color: #fff; font-size: 1.15rem; font-weight: 600;">
+                                    <?php echo htmlspecialchars($row["title"]); ?>
+                                </h3>
+                                <p class="mb-0" style="color: #bfc4cc; font-size: 0.98rem; margin-right: 1%;">
+                                    <?php
+                                    $content = htmlspecialchars($row["content"]);
+                                    if (mb_strlen($content) > 150) {
+                                        $content = mb_substr($content, 0, 150) . '...';
+                                    }
+                                    echo nl2br($content);
+                                    ?>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="text-end" style="min-width: 150px;">
+                            <p class="mb-1 text-secondary" style="font-size: 0.95rem;">
+                                Autor: <span
+                                    class="fw-semibold text-white"><?php echo htmlspecialchars($row["username"]); ?></span>
+                            </p>
+                            <p class="mb-0 text-secondary" style="font-size: 0.95rem;">
+                                Data: <?php echo $data; ?>
+                            </p>
+                            <a href="publicacao.php?id=<?php echo $row['id']; ?>" class="btn btn-secondary btn-sm mt-2">Ver
+                                Detalhes e Comentar</a>
+                        </div>
+                    </div>
+                    <?php
+                endwhile;
+            else:
+                ?>
+                <p style="color: #fff;">Não há publicações aprovadas disponíveis no momento.</p>
+                <?php
+            endif;
+
+            $stmt->close();
+            $conn->close();
+            ?>
+        </div>
+        <!-- Card Top Notas -->
+        <div class="p-4 rounded-4 shadow-lg"
+            style="background-color: #23262b; max-width: 350px; min-width: 17%; border-radius: 18px; height: fit-content;margin-right: 5%;">
+            <h2 class="mb-4 pb-2 border-bottom border-secondary" style="color: #fff; font-weight: bold;">Top Notas</h2>
+            <ul class="list-unstyled" style="color: #bfc4cc;">
+                <li>Nota 1 - Autor</li>
+                <li>Nota 2 - Autor</li>
+                <li>Nota 3 - Autor</li>
+            </ul>
+        </div>
     </div>
+
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

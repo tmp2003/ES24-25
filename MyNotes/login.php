@@ -50,18 +50,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <title>Login</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 </head>
-<body style="background-color: #F6F7FB;">
+<body style="background-color: #131519">
     <section class="vh-100">
         <div class="container py-5 h-100">
             <div class="row d-flex justify-content-center align-items-center h-100">
                 <div class="col col-xl-10">
-                    <div class="card" style="border-radius: 1rem;">
-                        <div class="row g-0">
+                    <div class="card" style="border-radius: 1rem;background-color: #393e46;">
+                        <div class="row g-0" style="border-radius: 1rem 0 0 1rem;">
                             <div class="col-md-6 col-lg-5 d-none d-md-block">
                                 <img src="./img/login.jpg" alt="login form" class="img-fluid" style="border-radius: 1rem 0 0 1rem;" />
                             </div>
-                            <div class="col-md-4 col-lg-4 d-flex align-items-center">
-                                <div class="card-body p-5 text-black">
+                            <div class="col-md-4 col-lg-4 d-flex align-items-center" style="background-color: #393e46;">
+                                <div class="card-body p-5 text-white" >
                                     <form method="POST">
                                         <div class="d-flex align-items-center mb-3 pb-1">
                                             <span class="h1 fw-bold mb-0">MyNotes</span>
@@ -83,8 +83,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                             <button class="btn btn-dark btn-lg btn-block" type="submit">Login</button>
                                         </div>
 
-                                        <a class="small text-muted" href="#">Esqueceu-se da password?</a>
-                                        <p class="mb-5 pb-lg-2" style="color: #393f81;">Não tem conta? <a href="register.php" style="color: #393f81;">Registe-se Aqui</a></p>
+                                        <a class="small " href="#">Esqueceu-se da password?</a>
+                                        <p class="mb-5 pb-lg-2">Não tem conta? <a href="register.php">Registe-se Aqui</a></p>
                                     </form>
                                 </div>
                             </div>

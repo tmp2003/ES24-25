@@ -17,6 +17,7 @@ if (!isset($_GET['id'])) {
 }
 
 $noteId = intval($_GET['id']);
+$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
 
 // Buscar os dados da nota
 $stmt = $conn->prepare("SELECT * FROM notes WHERE id = :note_id AND user_id = :user_id");
@@ -156,44 +157,71 @@ if (isset($_GET['delete_file'])) {
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="index.php">MyNotes</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav w-100 align-items-center">
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom" style="height: 100px;">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <!-- Logo -->
+            <div class="d-flex align-items-center flex-grow-1" style="min-width:180px; margin-left: 5%;">
+                <a class="navbar-brand" href="index.php" style="margin-left: 3rem;">MyNotes</a>
+            </div>
+            <!-- Itens centrais -->
+            <div class="d-flex justify-content-center flex-grow-1">
+                <ul class="navbar-nav align-items-center gap-3">
                     <li class="nav-item">
-                        <a class="nav-link" href="logout.php">Sair</a>
+                        <a class="nav-link" href="index.php">Hub</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="apontamentos.php">Apontamentos</a>
+                    </li>
+                    <?php if ($isAdmin): ?>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-warning" href="#" id="aprovacoesDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                Aprovações
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="aprovacoesDropdown">
+                                <li><a class="dropdown-item" href="aprovar_contas.php">Contas</a></li>
+                                <li><a class="dropdown-item" href="aprovar_notas.php">Notas</a></li>
+                            </ul>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+            <!-- Itens à direita -->
+            <div class="d-flex align-items-center flex-grow-1 justify-content-end" style="min-width:180px;">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="perfil.php">
+                            <img src="./img/avatar.png" class="rounded-circle" style="width: 40px; border: none;"
+                                alt="Avatar" />
+                        </a>
+                    </li>
+                    <?php if (isset($_SESSION["user_id"])): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="logout.php">Sair</a>
+                        </li>
+                    <?php else: ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="login.php">Login</a>
+                        </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="sidebar" style="text-align: center;">
-        <a href="perfil.php" style="border: none; background: none; padding: 0;">
-            <img src="./img/avatar.png" class="rounded-circle" style="width: 80px; border: none;" alt="Avatar" />
-        </a>
-        <p></p>
-        <a href="index.php">Página Principal</a>
-        <a href="apontamentos.php">Meus Apontamentos</a>
-    </div>
-
     <form method="POST" enctype="multipart/form-data">
-        <div class="content">
+        <div class="content" style="color: white;">
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
             <?php endif; ?>
 
             <div class="mb-3">
                 <label for="title" class="form-label">Título da Nota</label>
-                <input type="text" class="form-control" name="title" value="<?= htmlspecialchars($note['title']) ?>" required>
+                <input type="text" class="form-control textP" name="title" value="<?= htmlspecialchars($note['title']) ?>" required>
             </div>
             <div class="mb-3">
                 <label for="text" class="form-label">Conteúdo da Nota</label>
-                <textarea class="form-control" name="text" rows="10"><?= htmlspecialchars($note['content']) ?></textarea>
+                <textarea class="form-control textP" name="text" rows="10"><?= htmlspecialchars($note['content']) ?></textarea>
             </div>
             <div class="mb-3">
                 <label for="files" class="form-label">Anexar Ficheiros</label>

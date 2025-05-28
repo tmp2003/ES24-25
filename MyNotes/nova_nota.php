@@ -111,57 +111,75 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="index.php">MyNotes</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav w-100 align-items-center">
-                    <li class="nav-item mx-auto search-form" style="width: 50%;">
-                        <form class="d-flex">
-                            <input class="form-control me-2" type="search" placeholder="Procurar Notas" aria-label="Search">
-                            <button class="btn btn-outline-success" type="submit">Procurar</button>
-                        </form>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom" style="height: 100px;">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <!-- Logo -->
+            <div class="d-flex align-items-center flex-grow-1" style="min-width:180px; margin-left: 5%;">
+                <a class="navbar-brand" href="index.php" style="margin-left: 3rem;">MyNotes</a>
+            </div>
+            <!-- Itens centrais -->
+            <div class="d-flex justify-content-center flex-grow-1">
+                <ul class="navbar-nav align-items-center gap-3">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.php">Hub</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="logout.php">Sair</a>
+                        <a class="nav-link" href="apontamentos.php">Apontamentos</a>
                     </li>
+                    <?php if ($isAdmin): ?>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle text-warning" href="#" id="aprovacoesDropdown" role="button"
+                                data-bs-toggle="dropdown" aria-expanded="false">
+                                Aprovações
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="aprovacoesDropdown">
+                                <li><a class="dropdown-item" href="aprovar_contas.php">Contas</a></li>
+                                <li><a class="dropdown-item" href="aprovar_notas.php">Notas</a></li>
+                            </ul>
+                        </li>
+                    <?php endif; ?>
+                </ul>
+            </div>
+            <!-- Itens à direita -->
+            <div class="d-flex align-items-center flex-grow-1 justify-content-end" style="min-width:180px;">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link" href="perfil.php">
+                            <img src="./img/avatar.png" class="rounded-circle" style="width: 40px; border: none;"
+                                alt="Avatar" />
+                        </a>
+                    </li>
+                    <?php if (isset($_SESSION["user_id"])): ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="logout.php">Sair</a>
+                        </li>
+                    <?php else: ?>
+                        <li class="nav-item">
+                            <a class="nav-link" href="login.php">Login</a>
+                        </li>
+                    <?php endif; ?>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="sidebar" style="text-align: center;">
-        <a href="perfil.php" style="border: none; background: none; padding: 0;">
-            <img src="./img/avatar.png" class="rounded-circle" style="width: 80px; border: none;" alt="Avatar" />
-        </a>
-        <p></p>
-        <a href="index.php">Página Principal</a>
-        <a href="apontamentos.php">Meus Apontamentos</a>
-        <?php if ($isAdmin): ?>
-            <a href="aprovar_contas.php" class="text-warning fw-bold">Aprovações</a>
-        <?php endif; ?>
-    </div>
-
     <form method="POST" enctype="multipart/form-data" id="notaForm">
-        <div class="content">
+        <div class="content" style="color:white;">
             <?php if (!empty($error)): ?>
                 <div class="alert alert-danger"><?= $error ?></div>
             <?php endif; ?>
 
             <div class="mb-3">
                 <label for="title" class="form-label">Titulo da Nota</label>
-                <input type="text" class="form-control" name="title" required>
+                <input type="text" class="form-control textP" name="title" required>
             </div>
             <div class="mb-3">
                 <label for="text" class="form-label">Conteúdo da Nota</label>
-                <textarea class="form-control" name="text" rows="10"></textarea>
+                <textarea class="form-control  textP" name="text" rows="10"></textarea>
             </div>
             <div class="mb-3">
                 <label for="cadeiraSelect" class="form-label">Cadeira</label>
-                <select class="form-select" id="cadeiraSelect" name="id_cadeira" required>
+                <select class="form-select  textP" id="cadeiraSelect" name="id_cadeira" required>
                     <option value="">Escolha uma cadeira...</option>
                     <?php foreach ($cadeiras as $cadeira): ?>
                         <option value="<?= $cadeira['id'] ?>"><?= htmlspecialchars($cadeira['nome']) ?></option>
@@ -170,7 +188,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
             <div class="mb-3">
                 <label for="formFileMultiple" class="form-label">Anexar ficheiros</label>
-                <input class="form-control" type="file" name="Files[]" multiple accept=".jpg,.jpeg,.png,.pdf,.docx">
+                <input class="form-control  textP" type="file" name="Files[]" multiple accept=".jpg,.jpeg,.png,.pdf,.docx">
             </div>
             <div class="mb-3">
                 <button class="btn btn-secondary btn-lg" type="submit">Guardar</button>
