@@ -1,4 +1,5 @@
 <?php
+
 session_start();
 
 // Verificar se o utilizador está logado
@@ -11,6 +12,43 @@ if (!isset($_SESSION["user_id"])) {
 $username = $_SESSION["username"];
 $isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
 $escola = $_SESSION["escola"];
+
+// Conexão com a base de dados
+$conn = new mysqli("localhost", "root", "", "notesdb");
+if ($conn->connect_error) {
+    die("Erro de conexão: " . $conn->connect_error);
+}
+
+// Obter as publicações aprovadas da mesma escola do utilizador
+$sql = "SELECT n.id, n.title, n.content, n.created_at, u.username
+        FROM notes n
+        JOIN userdata u ON n.user_id = u.id
+        WHERE n.private_status = 0 AND n.escola = ?
+        ORDER BY n.created_at DESC";
+$stmt = $conn->prepare($sql);
+if (!$stmt) {
+    die("Erro na preparação da query: " . $conn->error);
+}
+$stmt->bind_param("i", $escola);
+$stmt->execute();
+$result = $stmt->get_result();
+
+// Buscar as 5 publicações com melhor média de rating, da escola do utilizador, e que sejam públicas
+$sql_top = "
+    SELECT n.id, n.title, u.username, AVG(r.rating) as media
+    FROM notes n
+    JOIN userdata u ON n.user_id = u.id
+    LEFT JOIN note_ratings r ON n.id = r.note_id
+    WHERE n.private_status = 0 AND n.escola = ?
+    GROUP BY n.id, n.title, u.username
+    HAVING COUNT(r.rating) > 0
+    ORDER BY media DESC, n.id DESC
+    LIMIT 5
+";
+$stmt_top = $conn->prepare($sql_top);
+$stmt_top->bind_param("i", $escola);
+$stmt_top->execute();
+$result_top = $stmt_top->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -26,24 +64,24 @@ $escola = $_SESSION["escola"];
     <link rel="stylesheet" href="styles.css">
 </head>
 
-<!-- Modal de Pesquisa -->
-<div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content" style="background-color: #23272b;">
-            <div class="modal-body">
-                <form class="d-flex">
-                    <input class="form-control me-2" style="background-color: #363a3e;border:none;" type="search" placeholder="Procure uma título ou conteúdo..."
-                        aria-label="Search">
-                    <button class="btn btn-primary" type="submit">
-                        <i class="bi bi-arrow-right"></i> Procurar
-                    </button>
-                </form>
+<body>
+
+    <!-- Modal de Pesquisa -->
+    <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="searchModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content" style="background-color: #23272b;">
+                <div class="modal-body">
+                    <form class="d-flex">
+                        <input class="form-control me-2" style="background-color: #363a3e;border:none;" type="search" placeholder="Procure uma título ou conteúdo..."
+                            aria-label="Search">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="bi bi-arrow-right"></i> Procurar
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
-</div>
-
-<body>
 
     <!-- Navbar Superior (Dark Mode) -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom" style="height: 100px;">
@@ -123,30 +161,7 @@ $escola = $_SESSION["escola"];
         <div class="p-4 rounded-4 shadow-lg"
             style="background-color: #23262b; min-width: 80%; flex: 2; border-radius: 18px;">
             <h2 class="mb-4 pb-2 border-bottom border-secondary" style="color: #fff; font-weight: bold;">Geral</h2>
-            <!-- ... conteúdo do card Geral ... -->
             <?php
-            // Conexão com a base de dados
-            $conn = new mysqli("localhost", "root", "", "notesdb");
-
-            // Verificar conexão
-            if ($conn->connect_error) {
-                die("Erro de conexão: " . $conn->connect_error);
-            }
-
-            // Obter as publicações aprovadas da mesma escola do utilizador
-            $sql = "SELECT n.id, n.title, n.content, n.created_at, u.username
-    FROM notes n
-    JOIN userdata    u ON n.user_id = u.id
-    WHERE n.private_status = 0 AND n.escola = ?
-    ORDER BY n.created_at DESC";
-            $stmt = $conn->prepare($sql);
-            if (!$stmt) {
-                die("Erro na preparação da query: " . $conn->error);
-            }
-            $stmt->bind_param("i", $escola);
-            $stmt->execute();
-            $result = $stmt->get_result();
-
             if ($result->num_rows > 0):
                 while ($row = $result->fetch_assoc()):
                     $data = date('d/m/Y', strtotime($row["created_at"])); // Data no formato dd/mm/yyyy
@@ -193,9 +208,6 @@ $escola = $_SESSION["escola"];
                 <p style="color: #fff;">Não há publicações aprovadas disponíveis no momento.</p>
                 <?php
             endif;
-
-            $stmt->close();
-            $conn->close();
             ?>
         </div>
         <!-- Card Top Notas -->
@@ -203,13 +215,26 @@ $escola = $_SESSION["escola"];
             style="background-color: #23262b; max-width: 350px; min-width: 17%; border-radius: 18px; height: fit-content;margin-right: 5%;">
             <h2 class="mb-4 pb-2 border-bottom border-secondary" style="color: #fff; font-weight: bold;">Top Notas</h2>
             <ul class="list-unstyled" style="color: #bfc4cc;">
-                <li>Nota 1 - Autor</li>
-                <li>Nota 2 - Autor</li>
-                <li>Nota 3 - Autor</li>
+                <?php if ($result_top->num_rows > 0): ?>
+                    <?php while ($row = $result_top->fetch_assoc()): ?>
+                        <li class="mb-3">
+                            <a href="publicacao.php?id=<?php echo $row['id']; ?>" class="fw-semibold text-white text-decoration-none">
+                                <?php echo htmlspecialchars($row["title"]); ?>
+                            </a>
+                            <br>
+                            <span style="font-size: 0.95rem;">
+                                <span class="text-secondary">Autor:</span> <?php echo htmlspecialchars($row["username"]); ?> <br>
+                                <span class="text-secondary">Média:</span>
+                                <span style="color: #ffc107;"><?php echo number_format($row["media"], 2); ?> ★</span>
+                            </span>
+                        </li>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <li>Sem notas avaliadas nesta escola.</li>
+                <?php endif; ?>
             </ul>
         </div>
     </div>
-
 
     <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>

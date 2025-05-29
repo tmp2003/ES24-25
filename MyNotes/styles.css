@@ -91,7 +91,7 @@ body {
     border: none !important;
 }
 
-.table{
+.table {
     border-radius: 10px;
     overflow: hidden;
 }
@@ -101,9 +101,9 @@ body {
     opacity: 0.4 !important;
 }
 
-.textP{
+.textP {
     background-color: #292e35;
-    color: white; 
+    color: white;
     border: none;
 }
 
@@ -156,4 +156,28 @@ input[type="file"]:active {
     color: #fff !important;
     border-color: #22252b !important;
     box-shadow: none !important;
+}
+
+.star {
+    color: #ccc;
+    transition: color 0.2s;
+}
+
+.star.checked {
+    color: #ffc107;
+}
+
+.star-rating button:hover .star,
+.star-rating button:focus .star {
+    color: #ff9800;
+}
+
+.star-rating {
+    user-select: none;
+}
+
+@media (max-width: 767px) {
+    .star-rating {
+        font-size: 1.5rem;
+    }
 }

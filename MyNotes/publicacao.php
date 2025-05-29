@@ -1,4 +1,6 @@
 <?php
+
+
 session_start();
 if (!isset($_SESSION["user_id"])) {
     header("Location: login.php");
@@ -11,7 +13,7 @@ if ($conn->connect_error) {
 }
 
 $note_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
-$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2; // Verifica se o utilizador é admin
+$isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
 
 // Obter detalhes da publicação
 $sql = "SELECT n.title, n.content, nf.file_path, u.username 
@@ -23,6 +25,38 @@ $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $note_id);
 $stmt->execute();
 $note = $stmt->get_result()->fetch_assoc();
+
+// Obter média de avaliações e avaliação do utilizador
+$sql_media = "SELECT AVG(rating) as media FROM note_ratings WHERE note_id = ?";
+$stmt_media = $conn->prepare($sql_media);
+$stmt_media->bind_param("i", $note_id);
+$stmt_media->execute();
+$media = $stmt_media->get_result()->fetch_assoc()["media"];
+
+$user_rating = 0;
+if (isset($_SESSION["user_id"])) {
+    $sql_user_rating = "SELECT rating FROM note_ratings WHERE note_id = ? AND user_id = ?";
+    $stmt_user_rating = $conn->prepare($sql_user_rating);
+    $stmt_user_rating->bind_param("ii", $note_id, $_SESSION["user_id"]);
+    $stmt_user_rating->execute();
+    $result_user_rating = $stmt_user_rating->get_result()->fetch_assoc();
+    if ($result_user_rating) {
+        $user_rating = $result_user_rating["rating"];
+    }
+}
+
+// Guardar avaliação
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["star_rating"])) {
+    $rating = intval($_POST["star_rating"]);
+    $user_id = $_SESSION["user_id"];
+    $sql_upsert = "INSERT INTO note_ratings (note_id, user_id, rating) VALUES (?, ?, ?)
+                   ON DUPLICATE KEY UPDATE rating = VALUES(rating)";
+    $stmt_upsert = $conn->prepare($sql_upsert);
+    $stmt_upsert->bind_param("iii", $note_id, $user_id, $rating);
+    $stmt_upsert->execute();
+    header("Location: publicacao.php?id=" . $note_id);
+    exit();
+}
 
 // Obter comentários da publicação
 $sql_comments = "SELECT c.id AS comment_id, c.comment, c.created_at, u.username 
@@ -51,10 +85,7 @@ $comentario_erro = "";
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["comment"])) {
     $comment = trim($_POST["comment"]);
     $user_id = $_SESSION["user_id"];
-
-    // Lista de palavras proibidas
     $bad_words = ['merda', 'puta', 'fodasse', 'shiy', 'fuck'];
-
     $has_bad_word = false;
     foreach ($bad_words as $bad_word) {
         if (stripos($comment, $bad_word) !== false) {
@@ -62,7 +93,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["comment"])) {
             break;
         }
     }
-
     if ($has_bad_word) {
         $comentario_erro = "O seu comentário contém linguagem imprópria e não foi publicado.";
     } elseif (!empty($comment)) {
@@ -84,19 +114,17 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["comment"])) {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Detalhes da Publicação</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css"> <!-- Estilos adicionais -->
-</head>
+    <link rel="stylesheet" href="styles.css">
+  </head>
 
 <body>
 
     <!-- Navbar Superior (Dark Mode) -->
     <nav class="navbar navbar-expand-lg navbar-dark navbar-custom" style="height: 100px;">
         <div class="container-fluid d-flex justify-content-between align-items-center">
-            <!-- Logo -->
             <div class="d-flex align-items-center flex-grow-1" style="min-width:180px; margin-left: 5%;">
                 <a class="navbar-brand" href="index.php" style="margin-left: 3rem;">MyNotes</a>
             </div>
-            <!-- Itens centrais -->
             <div class="d-flex justify-content-center flex-grow-1">
                 <ul class="navbar-nav align-items-center gap-3">
                     <li class="nav-item">
@@ -119,7 +147,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["comment"])) {
                     <?php endif; ?>
                 </ul>
             </div>
-            <!-- Itens à direita -->
             <div class="d-flex align-items-center flex-grow-1 justify-content-end" style="min-width:180px;">
                 <ul class="navbar-nav align-items-center">
                     <li class="nav-item">
@@ -142,18 +169,33 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["comment"])) {
         </div>
     </nav>
 
-
     <!-- Conteúdo Principal -->
     <div class="content" style="color: white;">
         <div class="container mt-5">
-            <h1><?php echo htmlspecialchars($note["title"]); ?></h1>
-            <p><?php echo nl2br(htmlspecialchars($note["content"])); ?></p>
-            <?php if (!empty($note["file_path"])): ?>
-                <a href="<?php echo htmlspecialchars($note["file_path"]); ?>" class="btn btn-primary" download>Descarregar
-                    Documento</a>
-            <?php endif; ?>
-            <p class=" mt-3" style="opacity: 0.5;">Publicado por: <?php echo htmlspecialchars($note["username"]); ?></p>
-
+            <div class="row">
+                <div class="col-md-10">
+                    <h1><?php echo htmlspecialchars($note["title"]); ?></h1>
+                    <p><?php echo nl2br(htmlspecialchars($note["content"])); ?></p>
+                    <?php if (!empty($note["file_path"])): ?>
+                        <a href="<?php echo htmlspecialchars($note["file_path"]); ?>" class="btn btn-primary" download>Descarregar Documento</a>
+                    <?php endif; ?>
+                    <p class="mt-3" style="opacity: 0.5;">Publicado por: <?php echo htmlspecialchars($note["username"]); ?></p>
+                </div>
+                <div class="col-md-2 d-flex flex-column align-items-end justify-content-start" style="min-width: 120px;">
+                    <form method="POST" id="ratingForm">
+                        <div class="star-rating" style="font-size:2rem; cursor:pointer;">
+                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <button type="submit" name="star_rating" value="<?php echo $i; ?>" style="background:none;border:none;padding:0;">
+                                    <span class="star<?php if ($i <= $user_rating) echo ' checked'; ?>" data-value="<?php echo $i; ?>">&#9733;</span>
+                                </button>
+                            <?php endfor; ?>
+                        </div>
+                    </form>
+                    <div class="mt-2" style="color: #ffc107;">
+                        Média: <?php echo $media ? number_format($media, 2) : "Sem avaliações"; ?>
+                    </div>
+                </div>
+            </div>
             <hr>
             <h3>Comentários</h3>
             <?php if ($comments->num_rows > 0): ?>
