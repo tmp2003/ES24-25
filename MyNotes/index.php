@@ -19,17 +19,45 @@ if ($conn->connect_error) {
     die("Erro de conexão: " . $conn->connect_error);
 }
 
-// Obter as publicações aprovadas da mesma escola do utilizador
+// Buscar cadeiras da escola do utilizador
+$sql_cadeiras = "SELECT id, nome FROM cadeiras WHERE escola_id = ?";
+$stmt_cadeiras = $conn->prepare($sql_cadeiras);
+if (!$stmt_cadeiras) {
+    die("Erro na preparação da query cadeiras: " . $conn->error);
+}
+$stmt_cadeiras->bind_param("i", $escola);
+$stmt_cadeiras->execute();
+$result_cadeiras = $stmt_cadeiras->get_result();
+
+// --- PESQUISA E FILTRO DE CADEIRA ---
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+$cadeira_id = isset($_GET['cadeira']) ? intval($_GET['cadeira']) : 0;
+
+// Query dinâmica para pesquisa e filtro
 $sql = "SELECT n.id, n.title, n.content, n.created_at, u.username
         FROM notes n
         JOIN userdata u ON n.user_id = u.id
-        WHERE n.private_status = 0 AND n.escola = ?
-        ORDER BY n.created_at DESC";
+        WHERE n.private_status = 0 AND n.escola = ?";
+$params = [$escola];
+$types = "i";
+
+if ($cadeira_id > 0) {
+    $sql .= " AND n.id_cadeira = ?";
+    $params[] = $cadeira_id;
+    $types .= "i";
+}
+if ($search !== '') {
+    $sql .= " AND n.title LIKE ?";
+    $params[] = '%' . $search . '%';
+    $types .= "s";
+}
+$sql .= " ORDER BY n.created_at DESC";
+
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
     die("Erro na preparação da query: " . $conn->error);
 }
-$stmt->bind_param("i", $escola);
+$stmt->bind_param($types, ...$params);
 $stmt->execute();
 $result = $stmt->get_result();
 
@@ -46,6 +74,9 @@ $sql_top = "
     LIMIT 5
 ";
 $stmt_top = $conn->prepare($sql_top);
+if (!$stmt_top) {
+    die("Erro na preparação da query top: " . $conn->error);
+}
 $stmt_top->bind_param("i", $escola);
 $stmt_top->execute();
 $result_top = $stmt_top->get_result();
@@ -71,9 +102,11 @@ $result_top = $stmt_top->get_result();
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="background-color: #23272b;">
                 <div class="modal-body">
-                    <form class="d-flex">
-                        <input class="form-control me-2" style="background-color: #363a3e;border:none;" type="search" placeholder="Procure uma título ou conteúdo..."
-                            aria-label="Search">
+                    <form class="d-flex" method="GET" action="index.php">
+                        <input class="form-control me-2 text-white" style="background-color: #363a3e;border:none;" type="search" name="search" placeholder="Procure um título..." aria-label="Search" value="<?php echo htmlspecialchars($search); ?>">
+                        <?php if ($cadeira_id > 0): ?>
+                            <input type="hidden" name="cadeira" value="<?php echo $cadeira_id; ?>">
+                        <?php endif; ?>
                         <button class="btn btn-primary" type="submit">
                             <i class="bi bi-arrow-right"></i> Procurar
                         </button>
@@ -145,11 +178,23 @@ $result_top = $stmt_top->get_result();
                     <i class="bi bi-house-door-fill"></i> Home
                 </a>
             </div>
-            <div style="min-width: 25%;">
-                <button class="btn btn-secondary d-flex align-items-center" style="min-width:60%;"
-                    data-bs-toggle="modal" data-bs-target="#searchModal">
-                    <i class="bi bi-search me-2"></i> Procurar...
-                </button>
+            <div style="min-width: 25%;" class="d-flex align-items-center gap-2">
+                <form method="GET" action="index.php" class="d-flex align-items-center gap-2 w-100">
+                    <button class="btn btn-secondary d-flex align-items-center" style="min-width:60%;" type="button" data-bs-toggle="modal" data-bs-target="#searchModal">
+                        <i class="bi bi-search me-2"></i> Procurar...
+                    </button>
+                    <select name="cadeira" class="form-select" style="max-width: 200px;" onchange="this.form.submit()">
+                        <option value="0">Todas as Cadeiras</option>
+                        <?php while ($row_cad = $result_cadeiras->fetch_assoc()): ?>
+                            <option value="<?php echo $row_cad['id']; ?>" <?php if ($cadeira_id == $row_cad['id']) echo 'selected'; ?>>
+                                <?php echo htmlspecialchars($row_cad['nome']); ?>
+                            </option>
+                        <?php endwhile; ?>
+                    </select>
+                    <?php if ($search !== ''): ?>
+                        <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
+                    <?php endif; ?>
+                </form>
             </div>
         </div>
     </nav>
@@ -161,6 +206,25 @@ $result_top = $stmt_top->get_result();
         <div class="p-4 rounded-4 shadow-lg"
             style="background-color: #23262b; min-width: 80%; flex: 2; border-radius: 18px;">
             <h2 class="mb-4 pb-2 border-bottom border-secondary" style="color: #fff; font-weight: bold;">Geral</h2>
+            <?php if ($search !== ''): ?>
+                <div class="alert alert-info mb-2">Resultados para: <strong><?php echo htmlspecialchars($search); ?></strong></div>
+            <?php endif; ?>
+            <?php if ($cadeira_id > 0): ?>
+                <div class="alert alert-info mb-4">
+                    Filtrado por cadeira:
+                    <strong>
+                        <?php
+                        $stmt_nome = $conn->prepare("SELECT nome FROM cadeiras WHERE id = ?");
+                        $stmt_nome->bind_param("i", $cadeira_id);
+                        $stmt_nome->execute();
+                        $stmt_nome->bind_result($nome_cadeira);
+                        $stmt_nome->fetch();
+                        echo htmlspecialchars($nome_cadeira);
+                        $stmt_nome->close();
+                        ?>
+                    </strong>
+                </div>
+            <?php endif; ?>
             <?php
             if ($result->num_rows > 0):
                 while ($row = $result->fetch_assoc()):
