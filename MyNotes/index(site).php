@@ -13,14 +13,21 @@ $username = $_SESSION["username"];
 $isAdmin = !empty($_SESSION["admin"]) && $_SESSION["admin"] == 2;
 $escola = $_SESSION["escola"];
 
-// Conexão com a base de dados (PDO)
-require_once 'config(site).php';
+// Conexão com a base de dados
+$conn = new mysqli("localhost", "root", "", "notesdb");
+if ($conn->connect_error) {
+    die("Erro de conexão: " . $conn->connect_error);
+}
 
 // Buscar cadeiras da escola do utilizador
 $sql_cadeiras = "SELECT id, nome FROM cadeiras WHERE escola_id = ?";
 $stmt_cadeiras = $conn->prepare($sql_cadeiras);
-$stmt_cadeiras->execute([$escola]);
-$result_cadeiras = $stmt_cadeiras->fetchAll(PDO::FETCH_ASSOC);
+if (!$stmt_cadeiras) {
+    die("Erro na preparação da query cadeiras: " . $conn->error);
+}
+$stmt_cadeiras->bind_param("i", $escola);
+$stmt_cadeiras->execute();
+$result_cadeiras = $stmt_cadeiras->get_result();
 
 // --- PESQUISA E FILTRO DE CADEIRA ---
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
@@ -32,20 +39,27 @@ $sql = "SELECT n.id, n.title, n.content, n.created_at, u.username
         JOIN userdata u ON n.user_id = u.id
         WHERE n.private_status = 0 AND n.escola = ?";
 $params = [$escola];
+$types = "i";
 
 if ($cadeira_id > 0) {
     $sql .= " AND n.id_cadeira = ?";
     $params[] = $cadeira_id;
+    $types .= "i";
 }
 if ($search !== '') {
     $sql .= " AND n.title LIKE ?";
     $params[] = '%' . $search . '%';
+    $types .= "s";
 }
 $sql .= " ORDER BY n.created_at DESC";
 
 $stmt = $conn->prepare($sql);
-$stmt->execute($params);
-$result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+if (!$stmt) {
+    die("Erro na preparação da query: " . $conn->error);
+}
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$result = $stmt->get_result();
 
 // Buscar as 5 publicações com melhor média de rating, da escola do utilizador, e que sejam públicas
 $sql_top = "
@@ -60,8 +74,12 @@ $sql_top = "
     LIMIT 5
 ";
 $stmt_top = $conn->prepare($sql_top);
-$stmt_top->execute([$escola]);
-$result_top = $stmt_top->fetchAll(PDO::FETCH_ASSOC);
+if (!$stmt_top) {
+    die("Erro na preparação da query top: " . $conn->error);
+}
+$stmt_top->bind_param("i", $escola);
+$stmt_top->execute();
+$result_top = $stmt_top->get_result();
 ?>
 
 <!DOCTYPE html>
@@ -167,11 +185,11 @@ $result_top = $stmt_top->fetchAll(PDO::FETCH_ASSOC);
                     </button>
                     <select name="cadeira" class="form-select" style="max-width: 200px;" onchange="this.form.submit()">
                         <option value="0">Todas as Cadeiras</option>
-                        <?php foreach ($result_cadeiras as $row_cad): ?>
+                        <?php while ($row_cad = $result_cadeiras->fetch_assoc()): ?>
                             <option value="<?php echo $row_cad['id']; ?>" <?php if ($cadeira_id == $row_cad['id']) echo 'selected'; ?>>
                                 <?php echo htmlspecialchars($row_cad['nome']); ?>
                             </option>
-                        <?php endforeach; ?>
+                        <?php endwhile; ?>
                     </select>
                     <?php if ($search !== ''): ?>
                         <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
@@ -197,16 +215,19 @@ $result_top = $stmt_top->fetchAll(PDO::FETCH_ASSOC);
                     <strong>
                         <?php
                         $stmt_nome = $conn->prepare("SELECT nome FROM cadeiras WHERE id = ?");
-                        $stmt_nome->execute([$cadeira_id]);
-                        $nome_cadeira = $stmt_nome->fetchColumn();
+                        $stmt_nome->bind_param("i", $cadeira_id);
+                        $stmt_nome->execute();
+                        $stmt_nome->bind_result($nome_cadeira);
+                        $stmt_nome->fetch();
                         echo htmlspecialchars($nome_cadeira);
+                        $stmt_nome->close();
                         ?>
                     </strong>
                 </div>
             <?php endif; ?>
             <?php
-            if (count($result) > 0):
-                foreach ($result as $row):
+            if ($result->num_rows > 0):
+                while ($row = $result->fetch_assoc()):
                     $data = date('d/m/Y', strtotime($row["created_at"])); // Data no formato dd/mm/yyyy
                     ?>
                     <div class="d-flex justify-content-between align-items-center border-bottom border-gray-800 py-4"
@@ -245,7 +266,7 @@ $result_top = $stmt_top->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                     </div>
                     <?php
-                endforeach;
+                endwhile;
             else:
                 ?>
                 <p style="color: #fff;">Não há publicações aprovadas disponíveis no momento.</p>
@@ -258,8 +279,8 @@ $result_top = $stmt_top->fetchAll(PDO::FETCH_ASSOC);
             style="background-color: #23262b; max-width: 350px; min-width: 17%; border-radius: 18px; height: fit-content;margin-right: 5%;">
             <h2 class="mb-4 pb-2 border-bottom border-secondary" style="color: #fff; font-weight: bold;">Top Notas</h2>
             <ul class="list-unstyled" style="color: #bfc4cc;">
-                <?php if (count($result_top) > 0): ?>
-                    <?php foreach ($result_top as $row): ?>
+                <?php if ($result_top->num_rows > 0): ?>
+                    <?php while ($row = $result_top->fetch_assoc()): ?>
                         <li class="mb-3">
                             <a href="publicacao.php?id=<?php echo $row['id']; ?>" class="fw-semibold text-white text-decoration-none">
                                 <?php echo htmlspecialchars($row["title"]); ?>
@@ -271,7 +292,7 @@ $result_top = $stmt_top->fetchAll(PDO::FETCH_ASSOC);
                                 <span style="color: #ffc107;"><?php echo number_format($row["media"], 2); ?> ★</span>
                             </span>
                         </li>
-                    <?php endforeach; ?>
+                    <?php endwhile; ?>
                 <?php else: ?>
                     <li>Sem notas avaliadas nesta escola.</li>
                 <?php endif; ?>
